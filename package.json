@@ -1,11 +1,58 @@
 {
+  "version": "0.0.2",
   "name": "whitepaper",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "React state management with OOP.",
+  "main": "build/index.js",
+  "typings": "build/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iliasbhal/whitepaper.git"
   },
-  "author": "iliasbhal",
-  "license": "ISC"
+  "keywords": [
+    "oop",
+    "ddd",
+    "react"
+  ],
+  "author": "Ilias Bhallil <ilias.bhal@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/iliasbhal/whitepaper/issues"
+  },
+  "homepage": "https://github.com/iliasbhal/whitepaper",
+  "scripts": {
+    "setup": "yarn build && npm link && npm link trooper",
+    "dev": "yarn setup && yarn build:watch",
+    "deploy": "yarn test && yarn build && npm publish",
+    "test": "jest",
+    "build": "tsc",
+    "build:watch": "tsc -w"
+  },
+  "peerDependencies": {},
+  "dependencies": {
+    "tslib": "^2.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.19.6",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-react": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
+    "@jest/types": "^28.1.3",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@types/jest": "^28.1.6",
+    "@types/node": "^18.6.4",
+    "babel-jest": "^29.2.2",
+    "chokidar": "^3.5.3",
+    "fs-extra": "^10.0.0",
+    "global-jsdom": "^8.6.0",
+    "jest": "^28.1.3",
+    "jest-environment-jsdom": "^29.2.2",
+    "jsdom": "^20.0.1",
+    "jsdom-global": "^3.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "ts-jest": "^28.0.7",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.2.3"
+  }
 }
