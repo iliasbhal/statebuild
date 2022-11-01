@@ -7,13 +7,11 @@ export class Entity {
   static subscribe = Entity.topics.subscribe;
   static publish = Entity.topics.publish;
 
-  static handlePropRead = <T extends object>(base: T, onPropVisit: (target: object, prop: string) => void) : T => {
+  static handlePropRead = <T extends object>(base: T, onPropVisit: (target: object, prop: string | symbol) => void) : T => {
     return new Proxy(base, {
       get(target, prop, receiver) {
         const value = Reflect.get(target, prop, receiver);
-        if (typeof prop === 'string') {
-          onPropVisit(target, prop);
-        }
+        onPropVisit(target, prop);
 
         if (typeof value === 'object') {
           return Entity.handlePropRead(value, onPropVisit);
@@ -27,9 +25,7 @@ export class Entity {
   private static handlePropUpdates = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
       set(target, prop, newValue, receiver) {
-        if (typeof prop === 'string') {
-          Entity.publish(proxy, prop)
-        }
+        Entity.publish(proxy, prop)
 
         if (newValue instanceof Object) {
           const proxyValue = Entity.handlePropUpdates(newValue)

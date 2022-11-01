@@ -2,12 +2,12 @@ export interface Subscription {
   unsubscribe() : void;
 }
 
-export type SubscriptionHandler = (topic: string) => void;
+export type SubscriptionHandler = (topic: string | symbol) => void;
 
-export class EventBus<Key extends object> {
-  subscriptions = new WeakMap<Key, Set<SubscriptionHandler>>()
+export class EventBus<Topic extends object> {
+  subscriptions = new WeakMap<Topic, Set<SubscriptionHandler>>()
 
-  publish = (target: Key, prop: string) => {
+  publish = (target: Topic, prop: string | symbol) => {
     const subscriptions = this.subscriptions.get(target);
     if (!subscriptions) {
       return;
@@ -18,7 +18,7 @@ export class EventBus<Key extends object> {
     });
   }
 
-  subscribe = (target: Key, handler: SubscriptionHandler) : Subscription => {
+  subscribe = (target: Topic, handler: SubscriptionHandler) : Subscription => {
     if (!this.subscriptions.has(target)) {
       this.subscriptions.set(target, new Set());
     }
@@ -29,6 +29,9 @@ export class EventBus<Key extends object> {
     return {
       unsubscribe: () => {
         subscriptions.delete(handler);
+        if (subscriptions.size == 0) {
+          this.subscriptions.delete(target);
+        }
       },
     }
   }
