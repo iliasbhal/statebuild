@@ -2,7 +2,9 @@ import React from 'react';
 import { Atom } from './Atom';
 import { useEntity } from './useEntity';
 
-export const useAtom = <A>(atom: Atom<A>) : [A, (next: A) => void] => {
+type UseAtom<Value> =  [Value, (next: Value) => void]
+
+export const useAtom = <A>(atom: Atom<A>) : UseAtom<A> => {
   const entity = useEntity(atom);
 
   const value = entity.get();
