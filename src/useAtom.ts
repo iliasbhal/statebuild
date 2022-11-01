@@ -1,0 +1,17 @@
+import React from 'react';
+import { Atom } from './Atom';
+import { useEntity } from './useEntity';
+
+export const useAtom = <A>(atom: Atom<A>) : [A, (next: A) => void] => {
+  const entity = useEntity(atom);
+
+  const value = entity.get();
+  const setValue = React.useCallback((nextAtomValue) => {
+    entity.set(nextAtomValue);
+  }, []);
+
+  return [
+    value,
+    setValue,
+  ]
+}
