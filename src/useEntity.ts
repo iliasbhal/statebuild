@@ -20,8 +20,8 @@ export const useEntity = <T extends Entity>(entity: Type<T> | T) : T => {
 
 const useDetectPropUsage = <T extends Entity>(entity: T) => {
   const usedPropsRef = React.useRef({
-    current: new Map<object, Set<string>>(),
-    final: new Map<object, Set<string>>(),
+    current: new Map<object, Set<string | symbol>>(),
+    final: new Map<object, Set<string | symbol>>(),
   });
 
   const ref = usedPropsRef.current 
@@ -35,14 +35,12 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
     });
   });
 
+  const forceRender = useForceRender();
   React.useEffect(() => {
     // Stop listening to attribute usage after render
     ref.final = ref.current;
     ref.current = new Map();
-  });
 
-  const forceRender = useForceRender();
-  React.useEffect(() => {
     const subscriptions : ReturnType<typeof Entity.subscribe>[] = [];
 
     ref.final.forEach((props, obj) => {

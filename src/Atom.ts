@@ -1,4 +1,5 @@
 import { Entity } from "./Entity";
+import { EventBus } from "./EventBus";
 
 export class Atom<T> extends Entity {
   protected value: T;
@@ -28,9 +29,10 @@ export class Atom<T> extends Entity {
   }
 }
 
-class DependencyTree {
+class SelectorTree {
   cache = new WeakSet<object>();
   dependents = new WeakMap<object, Set<object>>();
+  events = new EventBus(); 
 
   register(key: any, dependency: any) {
     this.cache.add(key.selector);
@@ -45,6 +47,7 @@ class DependencyTree {
   invalidate(key: any) {
     // remove all caches of selector that have key as dependncy;
     this.cache.delete(key.selector);
+    this.events.publish(key, 'delete');
 
     const dependents = this.dependents.get(key);
     dependents?.forEach(dependent => {
@@ -58,7 +61,7 @@ class DependencyTree {
 }
 
 export class AtomSelector<T> extends Atom<T> {
-  static tree = new DependencyTree();
+  static tree = new SelectorTree();
   protected selector : (use: any) => T;
   constructor(selector: (use: any) => T) {
     super(null);

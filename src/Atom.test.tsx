@@ -190,13 +190,4 @@ describe('Atom Selector', () => {
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(variableSpy).toHaveBeenCalledTimes(1);
   })
-
-  // This is because we don't get stable references
-  // when working with proxies
-  // we should ensure thet the reference key used
-  // when calling .register .invalidate and .verify is stable
-  // that's why we had to use .selector sometimes
-  // because .selector attribute is not wrapped 
-  // by a Proxy from Entity when read
-  it.todo('remove usage of .selector in DependencyTree');
 })

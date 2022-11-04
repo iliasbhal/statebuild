@@ -253,7 +253,7 @@ describe('useEntity', () => {
   
   class People extends Entity {
     people: Person[] = [];
-    
+
     addPerson(person: Person) {
       this.people.push(person);
     }

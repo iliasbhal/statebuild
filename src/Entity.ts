@@ -1,12 +1,10 @@
 import { EventBus } from "./EventBus";
 
-
-
 export class Entity {
   private static topics = new EventBus<Entity>();
   static subscribe = Entity.topics.subscribe;
   static publish = Entity.topics.publish;
-
+  static proxies = new WeakMap<object, object>();
   static handlePropRead = <T extends object>(base: T, onPropVisit: (target: object, prop: string | symbol) => void) : T => {
     return new Proxy(base, {
       get(target, prop, receiver) {
@@ -27,10 +25,7 @@ export class Entity {
   private static handlePropUpdates = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
       set(target, prop, newValue, receiver) {
-        const hasChanged = target[prop] !== newValue;
-        if (hasChanged) {
-          Entity.publish(proxy, prop)
-        }
+        Entity.publish(proxy, prop)
         
         if (newValue instanceof Object) {
           const proxyValue = Entity.handlePropUpdates(newValue)
