@@ -11,9 +11,11 @@ export class Entity {
     return new Proxy(base, {
       get(target, prop, receiver) {
         const value = Reflect.get(target, prop, receiver);
-        onPropVisit(target, prop);
+        if (typeof value !== 'function') {
+          onPropVisit(target, prop);
+        }
 
-        if (typeof value === 'object') {
+        if (typeof value === 'object' && value !== null) {
           return Entity.handlePropRead(value, onPropVisit);
         }
 
@@ -25,8 +27,11 @@ export class Entity {
   private static handlePropUpdates = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
       set(target, prop, newValue, receiver) {
-        Entity.publish(proxy, prop)
-
+        const hasChanged = target[prop] !== newValue;
+        if (hasChanged) {
+          Entity.publish(proxy, prop)
+        }
+        
         if (newValue instanceof Object) {
           const proxyValue = Entity.handlePropUpdates(newValue)
           return Reflect.set(target, prop, proxyValue, receiver);
