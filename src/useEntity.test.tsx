@@ -376,4 +376,43 @@ describe('useEntity', () => {
     expect(renderTrack).toHaveBeenCalledTimes(0);
     expect(people.people).toHaveLength(2);
   });
+
+  it('should rerender when object are coming from outter scope and are updated', () => {
+    
+    const first = new Person('FirstName LastName');
+    class People extends Entity{
+      people = [first];
+    }
+
+    const renderTrack = jest.fn();
+    const PeopleDisplay = (props: { people: People }) => {
+      const store = useEntity(props.people)
+
+      renderTrack();
+      return (
+        <div
+          data-testid="container-store"
+          onClick={() => {
+            first.firstName = 'Updated Name';
+          }}
+        >
+          {store.people[0].firstName}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(
+      <PeopleDisplay people={new People()} />
+    );
+    const container = wrapper.getByTestId('container-store');
+    expect(container.innerHTML).toBe("FirstName LastName");
+    renderTrack.mockClear();
+
+    act(() => {
+      container.click();
+    });
+  
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("Updated Name");
+  })
 });
