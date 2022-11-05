@@ -377,7 +377,7 @@ describe('useEntity', () => {
     expect(people.people).toHaveLength(2);
   });
 
-  it('should rerender when object are coming from outter scope and are updated', () => {
+  it('should render/rerender when out of scope object are updated', () => {
     
     const first = new Person('FirstName LastName');
     class People extends Entity{
