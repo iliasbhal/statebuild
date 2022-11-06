@@ -6,7 +6,7 @@ describe('Entity', () => {
     list = [];
   }
 
-  it('when subscribed, should track when object properties are set', () => {
+  it('should track when object properties are set', () => {
     const person = new Person();
 
     const callback = jest.fn();
@@ -19,7 +19,7 @@ describe('Entity', () => {
     expect(callback).toHaveBeenCalledWith('name');
   })
 
-  it('when subscribed, should track when array is mutated', () => {
+  it('should track when array is mutated', () => {
     const person = new Person();
 
     const callback = jest.fn();
