@@ -157,7 +157,7 @@ describe('Atom Selector', () => {
   it('should recompute invalidated upstream selectors tree 2', () => {
     const count = Atom.from(1);
     const doubleSpy = jest.fn();
-    const double = Atom.select((use) => {
+    const double = Atom.select((use) : number => {
       doubleSpy();
       return use(count) * 2;
     });
@@ -189,5 +189,73 @@ describe('Atom Selector', () => {
     expect(variable.get()).toBe(0);
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(variableSpy).toHaveBeenCalledTimes(1);
+  })
+
+  it('should accept entities as selector arguments', () => {
+    class Person extends Entity {
+      name: string;
+      lastName: string;
+
+      constructor(name: string) {
+        super();
+        this.setName(name);
+        this.setLastName('last')
+      }
+
+      setName(name: string) {
+        this.name = name;
+      }
+
+      setLastName(lastName: string) {
+        this.lastName = lastName;
+      }
+    }
+
+    const person = new Person('First');
+    const second = new Person('Second');
+    const updatedNameSpy = jest.fn();
+    const updatedName = Atom.select((use) => {
+      updatedNameSpy();
+      return use(person).name + '(Select)';
+    });
+
+    const marriedWithSpy = jest.fn();
+    const marriedWith = Atom.select((use) => {
+      marriedWithSpy();
+      return use(updatedName) + ' is with ' + use(second).name;
+    })
+
+    updatedName.get()
+    expect(updatedName.get()).toBe('First(Select)')
+    expect(updatedNameSpy).toHaveBeenCalledTimes(1);
+    expect(marriedWithSpy).not.toHaveBeenCalled();
+    updatedNameSpy.mockClear();
+
+    person.setName('New');
+    expect(updatedNameSpy).not.toHaveBeenCalled();
+    
+    updatedName.get()
+    expect(updatedName.get()).toBe('New(Select)')
+    expect(updatedNameSpy).toHaveBeenCalledTimes(1);
+    updatedNameSpy.mockClear();
+
+    marriedWith.get();
+    expect(marriedWith.get()).toBe('New(Select) is with Second');
+    expect(marriedWithSpy).toHaveBeenCalledTimes(1);
+    marriedWithSpy.mockClear();
+
+
+    person.setName('John');
+    marriedWith.get();
+    expect(marriedWith.get()).toBe('John(Select) is with Second');
+    expect(marriedWithSpy).toHaveBeenCalledTimes(1);
+    expect(updatedNameSpy).toHaveBeenCalledTimes(1);
+
+    marriedWithSpy.mockClear();
+    person.setLastName('Doe');
+    marriedWith.get();
+
+    expect(marriedWith.get()).toBe('John(Select) is with Second');
+    expect(marriedWithSpy).not.toHaveBeenCalled();
   })
 })

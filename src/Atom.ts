@@ -2,7 +2,7 @@ import { Entity } from "./Entity";
 import { EventBus } from "./EventBus";
 
 export class Atom<T> extends Entity {
-  protected value: T;
+  private value: T;
 
   constructor(value: T) {
     super();
@@ -15,7 +15,11 @@ export class Atom<T> extends Entity {
     return atom;
   }
 
-  static select<V>(selector: (use: <B>(entity: Atom<B>) => B) => V) : AtomSelector<V> {
+  static select<V>(
+    selector: (
+      use: AtomSelector<unknown>['use']
+    ) => V
+  ) : AtomSelector<V> {
     const atom = new AtomSelector(selector);
     return atom;
   }
@@ -60,6 +64,8 @@ class SelectorTree {
   }
 }
 
+type Use = (<B>(entity: Atom<B>) => B) & (<A extends Entity>(entity: A) => A);
+
 export class AtomSelector<T> extends Atom<T> {
   static tree = new SelectorTree();
   protected selector : (use: any) => T;
@@ -68,7 +74,7 @@ export class AtomSelector<T> extends Atom<T> {
     this.selector = selector;
   }
   
-  use = <A>(entity: Atom<A>) : A => {
+  use : Use = (entity: Entity)  => {
     const proxy = Entity.handlePropRead(entity, (parent, prop) => {
       AtomSelector.tree.register(this, parent);
 
