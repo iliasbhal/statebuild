@@ -415,4 +415,91 @@ describe('useEntity', () => {
     expect(renderTrack).toHaveBeenCalledTimes(1);
     expect(container.innerHTML).toBe("Updated Name");
   })
+
+  it('should render/rerender when arr is accessed through loops', () => {
+    const first = new Person('First');
+    const second = new Person('Second');
+    const third = new Person('Third');
+    class People extends Entity{
+      people = [first];
+    }
+
+    const people = new People();
+
+    let currentEffect = 0;
+    const clickEffect = [
+      () => first.firstName = 'First(updated)',
+      () => people.people.push(second),
+      () => second.firstName = 'Second(updated)',
+      () => people.people.unshift(third),
+      () => third.firstName = 'Third(updated)',
+    ]
+
+    const renderTrack = jest.fn();
+    const PeopleDisplay = (props: { people: People }) => {
+      const store = useEntity(props.people)
+
+      renderTrack();
+      return (
+        <div
+          data-testid="container-store"
+          onClick={() => {
+            clickEffect[currentEffect]();
+            currentEffect++;
+          }}
+        >
+          {store.people.map((person) => `${person.firstName},`)}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(
+      <PeopleDisplay people={people} />
+    );
+
+    const container = wrapper.getByTestId('container-store');
+    expect(container.innerHTML).toBe("First,");
+    renderTrack.mockClear();
+
+    act(() => {
+      container.click();
+    });
+
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("First(updated),");
+    renderTrack.mockClear();
+
+    act(() => {
+      container.click();
+    });
+
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("First(updated),Second,");
+    renderTrack.mockClear();
+
+    act(() => {
+      container.click();
+    });
+
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("First(updated),Second(updated),");
+    renderTrack.mockClear();
+
+
+    act(() => {
+      container.click();
+    });
+
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("Third,First(updated),Second(updated),");
+    renderTrack.mockClear();
+
+    act(() => {
+      container.click();
+    });
+
+    expect(renderTrack).toHaveBeenCalledTimes(1);
+    expect(container.innerHTML).toBe("Third(updated),First(updated),Second(updated),");
+    renderTrack.mockClear();
+  })
 });
