@@ -250,12 +250,44 @@ describe('Atom Selector', () => {
     expect(marriedWith.get()).toBe('John(Select) is with Second');
     expect(marriedWithSpy).toHaveBeenCalledTimes(1);
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
+  })
 
-    marriedWithSpy.mockClear();
+  it('should not invalidate selector if property isnt used in selector', () => {
+    class Person extends Entity {
+      name: string;
+      lastName: string;
+
+      constructor(name: string) {
+        super();
+        this.setName(name);
+        this.setLastName('last')
+      }
+
+      setName(name: string) {
+        this.name = name;
+      }
+
+      setLastName(lastName: string) {
+        this.lastName = lastName;
+      }
+    }
+
+    const person = new Person('First');
+    const updatedNameSpy = jest.fn();
+    const updatedName = Atom.select((use) => {
+      updatedNameSpy();
+      return use(person).name + '(Select)';
+    });
+
+
+    updatedName.get();
+    expect(updatedName.get()).toBe('First(Select)');
+    expect(updatedNameSpy).toHaveBeenCalledTimes(1);
+    updatedNameSpy.mockClear();
+
     person.setLastName('Doe');
-    marriedWith.get();
-
-    expect(marriedWith.get()).toBe('John(Select) is with Second');
-    expect(marriedWithSpy).not.toHaveBeenCalled();
+    updatedName.get();
+    expect(updatedName.get()).toBe('First(Select)');
+    expect(updatedNameSpy).not.toHaveBeenCalled();
   })
 })
