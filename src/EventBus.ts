@@ -2,7 +2,7 @@ export interface Subscription {
   unsubscribe() : void;
 }
 
-export type SubscriptionHandler = (topic: string | symbol) => void;
+export type SubscriptionHandler = (message: string | symbol) => void;
 
 export class EventBus<Topic extends object> {
   subscriptions = new WeakMap<Topic, Set<SubscriptionHandler>>()
