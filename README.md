@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/iliasbhal/graphant/main/public/repo_hero.png" />
+<img src="https://github.com/iliasbhal/graphant/blob/main/public/repo_hero.png?raw=true" />
 
 ## ✨ What is Graphant?
 
