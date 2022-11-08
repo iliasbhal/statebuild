@@ -1,4 +1,4 @@
-<img width="800" alt="repo_hero" src="https://user-images.githubusercontent.com/9442803/200681744-0fa101de-2a9c-432c-b53d-d9a46e4f6ca6.png">
+<img alt="repo_hero" src="https://user-images.githubusercontent.com/9442803/200681744-0fa101de-2a9c-432c-b53d-d9a46e4f6ca6.png">
 
 
 ## ✨ What is Graphant?
