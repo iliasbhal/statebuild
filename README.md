@@ -1,14 +1,14 @@
-<img src="https://raw.githubusercontent.com/iliasbhal/whitepaper/main/public/repo_hero.png" />
+<img src="https://raw.githubusercontent.com/iliasbhal/graphant/main/public/repo_hero.png" />
 
-## ✨ What is Whitepaper?
+## ✨ What is Graphant?
 
-XXXXX
+
 
 ## :book: License
 
 The MIT License
 
-Copyright (c) 2022 Whitepaper
+Copyright (c) 2022 Ilias Bhallil <ilias.bhal@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

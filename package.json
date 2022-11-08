@@ -1,12 +1,12 @@
 {
   "version": "0.0.2",
-  "name": "whitepaper",
+  "name": "graphant",
   "description": "React state management with OOP.",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iliasbhal/whitepaper.git"
+    "url": "git+https://github.com/iliasbhal/graphant.git"
   },
   "keywords": [
     "oop",
@@ -16,9 +16,9 @@
   "author": "Ilias Bhallil <ilias.bhal@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/iliasbhal/whitepaper/issues"
+    "url": "https://github.com/iliasbhal/graphant/issues"
   },
-  "homepage": "https://github.com/iliasbhal/whitepaper",
+  "homepage": "https://github.com/iliasbhal/graphant",
   "scripts": {
     "setup": "yarn build && npm link && npm link trooper",
     "dev": "yarn setup && yarn build:watch",
