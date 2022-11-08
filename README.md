@@ -1,4 +1,4 @@
-<img src="public/repo_hero.png" />
+![](public/repo_hero.png)
 
 ## ✨ What is Graphant?
 
