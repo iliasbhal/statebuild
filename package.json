@@ -1,12 +1,12 @@
 {
   "version": "0.0.6",
-  "name": "graphant",
+  "name": "statebuild",
   "description": "React state management with OOP.",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iliasbhal/graphant.git"
+    "url": "git+https://github.com/iliasbhal/statebuild.git"
   },
   "keywords": [
     "oop",
@@ -16,11 +16,11 @@
   "author": "Ilias Bhallil <ilias.bhal@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/iliasbhal/graphant/issues"
+    "url": "https://github.com/iliasbhal/statebuild/issues"
   },
-  "homepage": "https://github.com/iliasbhal/graphant",
+  "homepage": "https://github.com/iliasbhal/statebuild",
   "scripts": {
-    "setup": "yarn build && npm link && npm link graphant",
+    "setup": "yarn build && npm link && npm link statebuild",
     "dev": "yarn setup && yarn build:watch",
     "deploy": "yarn test && yarn build && npm publish",
     "test": "jest",
