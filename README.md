@@ -4,6 +4,12 @@
 ## ✨ What is Graphant?
 
 
+## 💼How to install?
+
+```
+$ npm i graphant
+```
+
 
 ## :book: License
 
