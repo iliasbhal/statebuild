@@ -25,7 +25,8 @@
     "deploy": "yarn test && yarn build && npm publish",
     "test": "jest",
     "build": "tsc",
-    "build:watch": "tsc -w"
+    "build:watch": "tsc -w",
+    "prepublish": "yarn build"
   },
   "peerDependencies": {},
   "dependencies": {
