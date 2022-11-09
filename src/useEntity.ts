@@ -13,11 +13,11 @@ export const useEntity = <T extends Entity>(entity: Type<T> | T) : T => {
     }
     
     const isEntityConstrutor = entity.prototype instanceof Entity;
-    if (!isEntityConstrutor) {
-      throw new Error('Constructor doesn\'t extends Entity');
+    if (isEntityConstrutor) {
+      return new entity()
     }
-
-    return new entity()
+    
+    throw new Error('Argument not supprted');
   });
   const detector = useDetectPropUsage(instance);
   return detector;

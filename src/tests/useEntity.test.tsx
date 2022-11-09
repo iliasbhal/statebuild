@@ -1,10 +1,10 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { Entity, useEntity } from '..';
+import { State, useEntity } from '..';
 
 describe('useEntity', () => {
-  class Count extends Entity {
+  class Count extends State {
     count = 0;
     count2 = 0;
 
@@ -57,7 +57,7 @@ describe('useEntity', () => {
   });
 
   it('should render when getter is updated', () => {
-    class Count extends Entity {
+    class Count extends State {
       count = 0;
   
       get readableCount() {
@@ -96,7 +96,7 @@ describe('useEntity', () => {
   })
 
   it('should batch updates and only render once', () => {
-    class Count extends Entity {
+    class Count extends State {
       count = 0;
   
       increment() {
@@ -236,7 +236,7 @@ describe('useEntity', () => {
   })
 
 
-  class Person extends Entity {
+  class Person extends State {
     firstName: string;
   
     constructor(firstName: string) {
@@ -250,7 +250,7 @@ describe('useEntity', () => {
     }
   }
   
-  class People extends Entity {
+  class People extends State {
     people: Person[] = [];
 
     addPerson(person: Person) {
@@ -379,7 +379,7 @@ describe('useEntity', () => {
   it('should render/rerender when out of scope object are updated', () => {
     
     const first = new Person('FirstName LastName');
-    class People extends Entity{
+    class People extends State{
       people = [first];
     }
 
@@ -419,7 +419,7 @@ describe('useEntity', () => {
     const first = new Person('First');
     const second = new Person('Second');
     const third = new Person('Third');
-    class People extends Entity{
+    class People extends State{
       people = [first];
     }
 

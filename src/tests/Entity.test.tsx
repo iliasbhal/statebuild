@@ -1,7 +1,7 @@
-import { Entity } from '..';
+import { State, Entity } from '..';
 
 describe('Entity', () => {
-  class Person extends Entity {
+  class Person extends State {
     name = "John";
     list: string[] = [];
   }

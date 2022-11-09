@@ -1,12 +1,14 @@
 import React from 'react';
-import { Atom, AtomSelector } from './Atom';
+import { Atom } from './Atom';
+import { Selector } from './Selector';
 import { useEntity } from './useEntity';
+import { useSelector } from './useSelector';
 
-export function useAtom<A>(selector: AtomSelector<A>) : A;
+export function useAtom<A>(selector: Selector<A>) : A;
 export function useAtom<A>(atom: Atom<A>) : [A, (nextValue: A) => void];
 export function useAtom(atom) {
-  if (atom instanceof AtomSelector) {
-    return useAtomSelector(atom);
+  if (atom instanceof Selector) {
+    return useSelector(atom);
   }
 
   const entity = useEntity(atom);
@@ -19,22 +21,4 @@ export function useAtom(atom) {
     value,
     setValue,
   ]
-}
-
-export const useAtomSelector = <A>(selector: AtomSelector<A>) : A => {
-  const [value, setValue] = React.useState(() => selector.select());
-
-  React.useEffect(() => {
-    const subscription = AtomSelector.tree.events.subscribe(selector, (messsage) => {
-      setTimeout(() => {
-        setValue(() => selector.select())
-      })
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  },[]);
-
-  return value;
 }
