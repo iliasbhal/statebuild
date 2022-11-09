@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/iliasbhal/graphant",
   "scripts": {
-    "setup": "yarn build && npm link && npm link trooper",
+    "setup": "yarn build && npm link && npm link graphant",
     "dev": "yarn setup && yarn build:watch",
     "deploy": "yarn test && yarn build && npm publish",
     "test": "jest",
