@@ -1,5 +1,4 @@
-import { Atom, AtomSelector } from './Atom';
-import { Entity } from './Entity';
+import { Entity, Atom, } from '..';
 
 describe('Atom', () => {
   it('can retrieve atom value', () => {

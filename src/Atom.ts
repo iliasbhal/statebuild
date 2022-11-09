@@ -1,5 +1,5 @@
 import { Entity } from "./Entity";
-import { EventBus } from "./EventBus";
+import { EventBus } from "./lib/EventBus";
 
 export class Atom<T> extends Entity {
   private value: T;

@@ -1,4 +1,4 @@
-import { EventBus } from "./EventBus";
+import { EventBus } from "./lib/EventBus";
 export class Entity {
   private static topics = new EventBus<Entity>();
   static subscribe = Entity.topics.subscribe;

@@ -1,8 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { Atom } from './Atom';
-import { useAtom } from './useAtom';
 import { act } from 'react-dom/test-utils';
+import { Atom, useAtom } from '..';
 
 describe('useAtom', () => {
   it('should display initial value', () => {

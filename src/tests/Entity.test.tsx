@@ -1,9 +1,9 @@
-import { Entity } from './Entity';
+import { Entity } from '..';
 
 describe('Entity', () => {
   class Person extends Entity {
     name = "John";
-    list = [];
+    list: string[] = [];
   }
 
   it('should track when object properties are set', () => {
