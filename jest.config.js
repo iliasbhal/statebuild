@@ -9,6 +9,7 @@ module.exports = {
   ],
   
   coveragePathIgnorePatterns: [
+    'src/index.ts',
     '.d.ts$',
   ],
 };
