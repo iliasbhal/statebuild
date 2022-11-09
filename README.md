@@ -4,7 +4,7 @@
 ## ✨ What is Graphant?
 
 
-## 💼How to install?
+## 💼 How to install?
 
 ```
 $ npm i graphant
