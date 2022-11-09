@@ -7,7 +7,7 @@
     // match output dir to input dir. e.g. dist/index instead of dist/src/index
     "rootDir": "./src",
     "outDir": "build",
-
+    "allowJs": true,
     "module": "commonjs",
     "target": "ESNext",
     "lib": ["esnext", "dom"],
