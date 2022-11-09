@@ -14,9 +14,9 @@ describe('Entity', () => {
 
     person.name = 'Dave';
 
-    expect(person).toMatchObject({ name: 'Dave' });
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith('name');
+    expect(person).toMatchObject({ name: 'Dave' });
   })
 
   it('should track when array is mutated', () => {
@@ -27,9 +27,12 @@ describe('Entity', () => {
 
     person.list.push('1')
 
-    expect(person.list).toMatchObject(["1"]);
     expect(callback).toHaveBeenCalled();
     expect(callback).toHaveBeenCalledWith('0');
     expect(callback).toHaveBeenCalledWith('length');
+    expect(person).toMatchObject({
+      name: 'John',
+      list: ['1'],
+    });
   })
 })
