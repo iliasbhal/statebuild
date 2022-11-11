@@ -56,7 +56,7 @@ describe('useEntity', () => {
     expect(container).toHaveTextContent("2 0");
   });
 
-  it('should render when getter is updated', () => {
+  it('should rerender when getter is updated', () => {
     class Count extends State {
       count = 0;
   
@@ -104,10 +104,10 @@ describe('useEntity', () => {
       }
     }
 
-    let renderCount = 0;
+    const renderSpy = jest.fn();
     const Container = () => {
       const store = useEntity(Count)
-      renderCount += 1;
+      renderSpy();
 
       return (
         <div
@@ -130,7 +130,7 @@ describe('useEntity', () => {
     });
 
     expect(container).toHaveTextContent("4");
-    expect(renderCount).toBe(2);
+    expect(renderSpy).toHaveBeenCalledTimes(2);
   })
 
   it('should rerender when updating attribute from within component', () => {
@@ -197,11 +197,11 @@ describe('useEntity', () => {
   })
 
   it('should not rerender if attributes is not used during render', () => {
-    let renderCount = 0;
+    const renderSpy = jest.fn();
 
     const Container = () => {
       const store = useEntity(Count)
-      renderCount += 1;
+      renderSpy();
       return (
         <div
           data-testid="container"
@@ -224,7 +224,7 @@ describe('useEntity', () => {
       container.click();
     });
 
-    expect(renderCount).toBe(1);
+    expect(renderSpy).toHaveBeenCalledTimes(1);
 
     act(() => {
       container.click();
@@ -232,7 +232,7 @@ describe('useEntity', () => {
       container.click();
     });
 
-    expect(renderCount).toBe(1);
+    expect(renderSpy).toHaveBeenCalledTimes(1);
   })
 
 
