@@ -1,16 +1,17 @@
 import { State } from '..';
+import { Selector } from '../Selector';
 
 describe('Selector', () => {
   it('can create a selector with other atoms', () =>{
     const count = State.from(3);
-    const double = State.select((use) => use(count) * 2);
+    const double = State.select(() => count.get() * 2);
 
     expect(double.get()).toBe(6);
   })
 
   it('throws if trying to manualy set set value', () => {
     const count = State.from(3);
-    const double = State.select((use) => use(count) * 2);
+    const double = State.select(() => count.get() * 2);
 
     expect(() => double.set(3)).toThrow();
   })
@@ -18,14 +19,14 @@ describe('Selector', () => {
   it('can create a selector with other updated atoms', () =>{
     const count = State.from(3);
     count.set(4);
-    const double = State.select((use) => use(count) * 2);
+    const double = State.select(() => count.get() * 2);
 
     expect(double.get()).toBe(8);
   })
 
   it('updates selector when base atom is updated', () =>{
     const count = State.from(3);
-    const double = State.select((use) => use(count) * 2);
+    const double = State.select(() => count.get() * 2);
 
     count.set(6);
     expect(double.get()).toBe(12);
@@ -47,7 +48,7 @@ describe('Selector', () => {
 
   it('doesn\'t recompute selector if atom hasn\'t changed', () => {
     const count = State.from(3);
-    const selector = jest.fn().mockImplementation((use) => use(count) * 2);
+    const selector = jest.fn().mockImplementation(() => count.get() * 2);
     const double = State.select(selector);
 
     expect(selector).not.toHaveBeenCalled();
@@ -75,15 +76,15 @@ describe('Selector', () => {
   it('accepts a selectors as arguments', () => {
     const count = State.from(3);
     const selector = jest.fn();
-    const double = State.select((use) => {
+    const double = State.select(() => {
       selector();
-      return use(count) * 2;
+      return count.get() * 2;
     });
 
     const selector2 = jest.fn();
-    const quad = State.select((use) => {
+    const quad = State.select(() => {
       selector2();
-      return use(double) * 2;
+      return double.get() * 2;
     });
 
     expect(selector).not.toHaveBeenCalled();
@@ -96,28 +97,29 @@ describe('Selector', () => {
 
   it('be up to date when upstream selector isn\'t valid', () => {
     const count = State.from(1);
-    const double = State.select((use) => use(count) * 2);
-    const quad = State.select((use) => use(double) * 2);
+    const double = State.select(() => count.get() * 2);
+    const ten = State.select(() => double.get() * 10);
 
-    expect(quad.get()).toBe(4);
-
+    
+    expect(ten.get()).toBe(20);
+    
     count.set(100)
 
-    expect(quad.get()).toBe(400);
+    expect(ten.get()).toBe(2000);
   })
 
   it('should recompute invalidated upstream selectors', () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
-    const double = State.select((use) => {
+    const double = State.select(() => {
       doubleSpy();
-      return use(count) * 2;
+      return count.get() * 2;
     });
 
     const tripleSpy = jest.fn();
-    const triple = State.select((use) => {
+    const triple = State.select(() => {
       tripleSpy();
-      return use(double) * 3;
+      return double.get() * 3;
     });
 
     expect(doubleSpy).not.toHaveBeenCalled();
@@ -143,17 +145,17 @@ describe('Selector', () => {
   it('should recompute invalidated upstream selectors tree 2', () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
-    const double = State.select((use) : number => {
+    const double = State.select(() : number => {
       doubleSpy();
-      return use(count) * 2;
+      return count.get() * 2;
     });
     
     const multiple = State.from(3);
     const multiple2 = State.from(1000);
     const variableSpy = jest.fn();
-    const variable = State.select((use) => {
+    const variable = State.select(() => {
       variableSpy();
-      return use(double) * use(multiple) * use(multiple2);
+      return double.get() * multiple.get() * multiple2.get();
     });
 
     variable.get()
@@ -200,15 +202,15 @@ describe('Selector', () => {
     const person = new Person('First');
     const second = new Person('Second');
     const updatedNameSpy = jest.fn();
-    const updatedName = State.select((use) => {
+    const updatedName = State.select(() => {
       updatedNameSpy();
-      return use(person).name + '(Select)';
+      return person.name + '(Select)';
     });
 
     const marriedWithSpy = jest.fn();
-    const marriedWith = State.select((use) => {
+    const marriedWith = State.select(() => {
       marriedWithSpy();
-      return use(updatedName) + ' is with ' + use(second).name;
+      return updatedName.get() + ' is with ' + second.name;
     })
 
     updatedName.get()
@@ -260,9 +262,9 @@ describe('Selector', () => {
 
     const person = new Person('First');
     const updatedNameSpy = jest.fn();
-    const updatedName = State.select((use) => {
+    const updatedName = State.select(() => {
       updatedNameSpy();
-      return use(person).name + '(Select)';
+      return person.name + '(Select)';
     });
 
 

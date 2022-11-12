@@ -1,32 +1,33 @@
+import { Entity } from "../Entity";
 import { EventBus } from "./EventBus";
 
 export class DependencyTree {
-  cache = new WeakSet<object>();
-  dependents = new WeakMap<object, Set<object>>();
+  cache = new Set<object>();
+  dependentKeysByKey = new Map<object, Set<object>>();
   events = new EventBus(); 
 
-  register(key: any, dependency: any) {
-    this.cache.add(key.selector);
+  register(key: any, dependent: any) {
+    this.cache.add(key);
 
-    if (!this.dependents.has(dependency)) {
-      this.dependents.set(dependency, new Set());
+    if (!this.dependentKeysByKey.has(dependent)) {
+      this.dependentKeysByKey.set(dependent, new Set());
     }
 
-    this.dependents.get(dependency).add(key);
+    this.dependentKeysByKey.get(dependent).add(key);
   }
 
   invalidate(key: any) {
     // remove all caches of selector that have key as dependncy;
-    this.cache.delete(key.selector);
+    this.cache.delete(key);
     this.events.publish(key, 'delete');
 
-    const dependents = this.dependents.get(key);
-    dependents?.forEach(dependent => {
-      this.invalidate(dependent);
+    const orignalKey = Entity.getBaseObject(key);
+    this.dependentKeysByKey.get(orignalKey)?.forEach(dependentKey => {
+      this.invalidate(dependentKey);
     });
   }
 
   verify(key: any) {
-    return this.cache.has(key.selector);
+    return this.cache.has(key);
   }
 }

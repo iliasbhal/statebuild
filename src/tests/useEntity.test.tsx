@@ -95,6 +95,44 @@ describe('useEntity', () => {
     expect(container).toHaveTextContent("3x times");
   })
 
+  it('should rerender when getter closur is updated', () => {
+    const person = new Person('John');
+    class TestState extends State {
+      count = 0;
+  
+      get text() {
+        return `${person.firstName} counts to ${this.count}`;
+      }
+  
+      increment() {
+        this.count += 1;
+      }
+    }
+
+    const renderSpy = jest.fn();
+    const Container = () => {
+      const store = useEntity(TestState)
+      renderSpy();
+
+      return (
+        <div data-testid="container">
+          {store.text}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(<Container />);
+    const container = wrapper.getByTestId('container');
+
+    expect(container.innerHTML).toBe('John counts to 0');
+
+    act(() => {
+      person.setFirstName('Lynda');
+    });
+
+    expect(container.innerHTML).toBe('Lynda counts to 0');
+  });
+
   it('should batch updates and only render once', () => {
     class Count extends State {
       count = 0;

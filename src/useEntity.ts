@@ -30,26 +30,27 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
   });
 
   const ref = usedPropsRef.current 
-  const [proxy] = React.useState(() => {
-    return Entity.handlePropRead(entity, (parent, key) => {
-      if (!ref.current.has(parent)) {
-        ref.current.set(parent, new Set());
-      }
-  
-      ref.current.get(parent).add(key);
-    });
+
+  const registration = Entity.regsiterGlobalListener(entity, (parent, key) => {
+    if (!ref.current.has(parent)) {
+      ref.current.set(parent, new Set());
+    }
+
+    ref.current.get(parent).add(key);
   });
 
   const forceRender = useForceRender();
   React.useEffect(() => {
+    registration.unregister();
+
     // Stop listening to attribute usage after render
     ref.final = ref.current;
     ref.current = new Map();
 
-    const subscriptions : ReturnType<typeof Entity.subscribe>[] = [];
+    const subscriptions : ReturnType<typeof Entity.changes.subscribe>[] = [];
 
     ref.final.forEach((props, obj) => {
-      const subscription = Entity.subscribe(obj, (prop) => {
+      const subscription = Entity.changes.subscribe(obj, (prop) => {
         const isPropUsed = props.has(prop);
         if (isPropUsed) {
           forceRender();
@@ -66,7 +67,7 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
     }
   });
 
-  return proxy;
+  return entity;
 }
 
 const useForceRender = () => {

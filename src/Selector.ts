@@ -2,42 +2,31 @@ import { Atom } from "./Atom";
 import { Entity } from './Entity';
 import { DependencyTree } from './lib/DependencyTree';
 
-
-type Use = (<B>(entity: Atom<B>) => B) & (<A extends Entity>(entity: A) => A);
-
 export class Selector<T> extends Atom<T> {
   static tree = new DependencyTree();
-  protected selector : (use: any) => T;
-  constructor(selector: (use: any) => T) {
+  protected selector : () => T;
+  constructor(selector: () => T) {
     super(null);
     this.selector = selector;
-  }
-  
-  use : Use = (entity: Entity)  => {
-    const proxy = Entity.handlePropRead(entity, (parent, prop) => {
-      Selector.tree.register(this, parent);
-
-      // Ensure that get notify when one a dependency is updated
-      // In that case we'll need to invalidate this and downstream selectors
-      Entity.subscribe(parent, (updatedProp) => {
-        if (updatedProp !== prop) return;
-        Selector.tree.invalidate(this);
-      });
-    });
-
-    // We need to return the current atom value
-    if (proxy instanceof Atom) {
-      const value = proxy.get();
-      return value;
-    }
-
-    return proxy;
   }
 
   select() {
     const hasCachedValue = Selector.tree.verify(this);
     if (!hasCachedValue) {
-      const selected = this.selector(this.use);
+      const registration = Entity.regsiterGlobalListener(this, (parent, prop) => {
+        Selector.tree.register(this, parent);
+
+        // Ensure that get notify when one a dependency is updated
+        // In that case we'll need to invalidate this and downstream selectors
+        Entity.changes.subscribe(parent, (updatedProp) => {
+          if (updatedProp !== prop) return;
+          Selector.tree.invalidate(this);
+        });
+      })
+
+      const selected = this.selector();
+
+      registration.unregister();
       super.set(selected);
     } 
 

@@ -188,8 +188,8 @@ describe('useAtom', () => {
 
   it('should return selector value', () => {
     const count = Atom.from(3);
-    const doubleSelector = Atom.select((get) => {
-      return get(count) * 2;
+    const doubleSelector = Atom.select(() => {
+      return count.get() * 2;
     })
 
     const rerenderSpy = jest.fn();
@@ -212,8 +212,8 @@ describe('useAtom', () => {
   it('should render updated selector value', async () => {
     jest.useFakeTimers();
     const count = Atom.from(3);
-    const doubleSelector = Atom.select((get) => {
-      return get(count) * 2;
+    const doubleSelector = Atom.select(() => {
+      return count.get() * 2;
     })
 
     const rerenderSpy = jest.fn();

@@ -1,6 +1,6 @@
 import { Entity } from './Entity';
 import type { Atom } from './Atom';
-import type { Selector  } from './Selector';
+import type { Selector } from './Selector';
 
 export class State extends Entity {
   static from<V>(value: V) {
@@ -10,15 +10,10 @@ export class State extends Entity {
     return atom;
   }
 
-  static select<V>(
-    selector: (
-      use: Selector<unknown>['use']
-    ) => V
-  ) : Selector<V> {
+  static select<V>(selectorFn: () => V) : Selector<V> {
     const exports = require('./Selector');
-
     const SelectorConstructor = exports.Selector as typeof Selector;
-    const atom = new SelectorConstructor(selector);
-    return atom;
+    const selector = new SelectorConstructor(selectorFn);
+    return selector;
   }
 }

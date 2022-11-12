@@ -1,33 +1,50 @@
 import { EventBus } from "./lib/EventBus";
 
+type PropVisitor = (target: object, prop: string | symbol) => void;
+
 export class Entity {
-  private static topics = new EventBus<Entity>();
-  static subscribe = Entity.topics.subscribe;
-  static publish = Entity.topics.publish;
-  static proxies = new WeakSet<object>();
-  static handlePropRead = <T extends object>(base: T, onPropVisit: (target: object, prop: string | symbol) => void) : T => {
-    return new Proxy(base, {
-      get(target, prop, receiver) {
-        const value = Reflect.get(target, prop, receiver);
-        if (typeof value !== 'function') {
-          onPropVisit(target, prop);
-        }
+  static changes = new EventBus<Entity>();
+  
+  static globalRegistrationStack : Entity[] = [];
+  static globalVistorByBase = new WeakMap<Entity, PropVisitor>();
+  static regsiterGlobalListener(base: Entity, visitor: PropVisitor) {
+    Entity.globalRegistrationStack.push(base);
+    Entity.globalVistorByBase.set(base, visitor);
+    
+    return {
+      unregister() {
+        const idx = Entity.globalRegistrationStack.indexOf(base);
+        Entity.globalRegistrationStack.splice(idx, 1);
+        Entity.globalVistorByBase.delete(base);
+      }
+    }
+  }
 
-        if (typeof value === 'object' && value !== null) {
-          return Entity.handlePropRead(value, onPropVisit);
-        }
-
-        return value;
-      },
-    })
+  
+  static originalObjectByProxy = new WeakMap<object>();
+  static getBaseObject(obj: Entity) : Entity {
+    return Entity.originalObjectByProxy.get(obj) ?? obj;
   }
 
   private static handlePropUpdates = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+
+        if (typeof value !== 'function') {
+          const lastKey = Entity.globalRegistrationStack[Entity.globalRegistrationStack.length - 1];
+          if (lastKey) {
+            const propVisitor = Entity.globalVistorByBase.get(lastKey);
+            propVisitor(base, prop);
+          }
+        }
+
+        return value
+      },
       set(target, prop, newValue, receiver) {
-        Entity.publish(proxy, prop);
+        Entity.changes.publish(base, prop);
         
-        const isAlreadyProxy = Entity.proxies.has(newValue);
+        const isAlreadyProxy = Entity.originalObjectByProxy.has(newValue);
         const isObject = newValue instanceof Object;
         const shouldWrapWithProxy = !isAlreadyProxy && isObject;
         if (shouldWrapWithProxy) {
@@ -39,7 +56,7 @@ export class Entity {
       },
     })
 
-    Entity.proxies.add(proxy);
+    Entity.originalObjectByProxy.set(proxy, base);
     return proxy;
   }
 
