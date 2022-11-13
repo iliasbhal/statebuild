@@ -2,23 +2,26 @@ import { Atom } from "./Atom";
 import { Entity } from './Entity';
 import { DependencyTree } from './lib/DependencyTree';
 
+type CallableSelector<V> = (() => V) & Selector<V>;
+
 export class Selector<T> extends Atom<T> {
   static tree = new DependencyTree();
+
   protected selector : () => T;
   constructor(selector: () => T) {
     super(null);
     this.selector = selector;
   }
 
-
   static selectorInstanceByCallable = new WeakMap<any, Selector<unknown>>
-  static createCallableSelector<V>(selector: Selector<V>) {
+  static createCallableSelector<V>(selectorFn: () => V) : CallableSelector<V> {
+    const selector = new Selector(selectorFn);
+
     const callable = () => selector.get();
     Object.setPrototypeOf(callable, Selector.prototype);
-    callable.get = () => selector.get();
 
     Selector.selectorInstanceByCallable.set(callable, selector);
-    return callable ;
+    return Object.assign(callable, selector);
   }
 
   private select() {
@@ -44,11 +47,11 @@ export class Selector<T> extends Atom<T> {
     return super.get();
   }
 
-  set(value: T) {
+  set = (value: T) => {
     throw new Error('Selector is read only, cannot use .set() method');
   }
 
-  get() {
+  get = () => {
     return this.select();
   }
 }
