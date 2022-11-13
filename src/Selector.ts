@@ -24,22 +24,26 @@ export class Selector<T> extends Atom<T> {
     return Object.assign(callable, selector);
   }
 
+  static autoRegisterSelectorDependencies(selector) {
+    const registration = Entity.regsiterGlobalListener(selector, (parent, prop) => {
+      Selector.tree.register(selector, parent);
+
+      // Ensure that get notify when one a dependency is updated
+      // In that case we'll need to invalidate this and downstream selectors
+      Entity.changes.subscribe(parent, (updatedProp) => {
+        if (updatedProp !== prop) return;
+        Selector.tree.invalidate(selector);
+      });
+    })
+
+    return registration;
+  }
+
   private select() {
     const hasCachedValue = Selector.tree.verify(this);
     if (!hasCachedValue) {
-      const registration = Entity.regsiterGlobalListener(this, (parent, prop) => {
-        Selector.tree.register(this, parent);
-
-        // Ensure that get notify when one a dependency is updated
-        // In that case we'll need to invalidate this and downstream selectors
-        Entity.changes.subscribe(parent, (updatedProp) => {
-          if (updatedProp !== prop) return;
-          Selector.tree.invalidate(this);
-        });
-      })
-
+      const registration = Selector.autoRegisterSelectorDependencies(this)
       const selected = this.selector();
-
       registration.unregister();
       super.set(selected);
     } 
