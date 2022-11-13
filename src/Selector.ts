@@ -10,7 +10,18 @@ export class Selector<T> extends Atom<T> {
     this.selector = selector;
   }
 
-  select() {
+
+  static selectorInstanceByCallable = new WeakMap<any, Selector<unknown>>
+  static createCallableSelector<V>(selector: Selector<V>) {
+    const callable = () => selector.get();
+    Object.setPrototypeOf(callable, Selector.prototype);
+    callable.get = () => selector.get();
+
+    Selector.selectorInstanceByCallable.set(callable, selector);
+    return callable ;
+  }
+
+  private select() {
     const hasCachedValue = Selector.tree.verify(this);
     if (!hasCachedValue) {
       const registration = Entity.regsiterGlobalListener(this, (parent, prop) => {

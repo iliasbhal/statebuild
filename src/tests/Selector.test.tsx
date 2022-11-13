@@ -13,7 +13,7 @@ describe('Selector', () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
-    expect(() => double.set(3)).toThrow();
+    expect(() => (double as any).set(3)).toThrow('Selector is read only');
   })
 
   it('can create a selector with other updated atoms', () =>{
@@ -71,6 +71,25 @@ describe('Selector', () => {
 
     expect(double.get()).toBe(8);
     expect(selector).toHaveBeenCalledTimes(1);
+  })
+
+  it('can be used like a normal function', () => {
+    const count = State.from(3);
+    const doubleSelector = jest.fn();
+    const double = State.select(() => {
+      doubleSelector();
+      return count.get() * 2
+    });
+
+    const tenSelector = jest.fn();
+    const ten = State.select(() => {
+      tenSelector();
+      return double.get() * 10
+    })
+
+    expect(ten()).toBe(60);
+    expect(tenSelector).toHaveBeenCalledTimes(1);
+    expect(doubleSelector).toHaveBeenCalledTimes(1);
   })
 
   it('accepts a selectors as arguments', () => {

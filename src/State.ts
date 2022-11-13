@@ -10,10 +10,10 @@ export class State extends Entity {
     return atom;
   }
 
-  static select<V>(selectorFn: () => V) : Selector<V> {
+  static select<V>(selectorFn: () => V) : ReturnType<typeof Selector.createCallableSelector<V>> {
     const exports = require('./Selector');
     const SelectorConstructor = exports.Selector as typeof Selector;
     const selector = new SelectorConstructor(selectorFn);
-    return selector;
+    return SelectorConstructor.createCallableSelector(selector);
   }
 }
