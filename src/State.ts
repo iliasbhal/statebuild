@@ -1,19 +1,18 @@
 import { Entity } from './Entity';
-import type { Atom } from './Atom';
-import type { Selector } from './Selector';
+import type { Atom as AtomType } from './Atom';
+import type { Selector as SelectorType} from './Selector';
 
 export class State extends Entity {
   static from<V>(value: V) {
     const exports = require('./Atom');
-    const AtomConstructor = exports.Atom as typeof Atom;
-    const atom = new AtomConstructor(value);
+    const Atom = exports.Atom as typeof AtomType;
+    const atom = new Atom(value);
     return atom;
   }
 
-  static select<V>(selectorFn: () => V) : ReturnType<typeof Selector.createCallableSelector<V>> {
+  static select<V>(selectorFn: () => V) {
     const exports = require('./Selector');
-    const SelectorConstructor = exports.Selector as typeof Selector;
-    const selector = new SelectorConstructor(selectorFn);
-    return SelectorConstructor.createCallableSelector(selector);
+    const Selector = exports.Selector as typeof SelectorType;
+    return Selector.createCallableSelector(selectorFn);
   }
 }
