@@ -24,6 +24,17 @@ export class Selector<T> extends Atom<T> {
     return Object.assign(callable, selector);
   }
 
+  static subsribeToSelectorChanges(selector, callback) {
+    const coreSelector = Selector.selectorInstanceByCallable.get(selector) || selector;
+    const subscription = Selector.tree.events.subscribe(coreSelector, (messsage) => {
+      setTimeout(() => {
+        callback(selector.get());
+      })
+    })
+
+    return subscription;
+  }
+
   static autoRegisterSelectorDependencies(selector) {
     const registration = Entity.regsiterGlobalListener(selector, (parent, prop) => {
       Selector.tree.register(selector, parent);
