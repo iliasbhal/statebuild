@@ -1,5 +1,6 @@
 import React from "react";
 import { Entity } from './Entity';
+import { useForceRender } from './lib/useForceRender';
 
 interface Type<T> extends Function { 
   new (...args: any[]): T; 
@@ -68,11 +69,4 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
   });
 
   return entity;
-}
-
-const useForceRender = () => {
-  const [_, setState] = React.useState({});
-
-  const rerender = React.useCallback(() => setState({}), []);
-  return rerender;
 }
