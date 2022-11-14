@@ -41,7 +41,7 @@ export class Selector<T> extends Atom<T> {
 
       // Ensure that get notify when one a dependency is updated
       // In that case we'll need to invalidate this and downstream selectors
-      Entity.changes.subscribe(parent, (updatedProp) => {
+      Entity.subscribe(parent, (updatedProp) => {
         if (updatedProp !== prop) return;
         Selector.tree.invalidate(selector);
       });

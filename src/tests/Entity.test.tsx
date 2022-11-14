@@ -1,6 +1,6 @@
 import { State, Entity } from '..';
 
-describe.skip('Entity', () => {
+describe('Entity', () => {
   class Person extends State {
     name = "John";
     list: string[] = [];
@@ -10,7 +10,7 @@ describe.skip('Entity', () => {
     const person = new Person();
 
     const callback = jest.fn();
-    Entity.changes.subscribe(person, callback);
+    Entity.subscribe(person, callback);
 
     person.name = 'Dave';
 
@@ -23,7 +23,7 @@ describe.skip('Entity', () => {
     const person = new Person();
 
     const callback = jest.fn();
-    Entity.changes.subscribe(person.list, callback);
+    Entity.subscribe(person.list, callback);
 
     person.list.push('1')
 
@@ -44,7 +44,7 @@ describe.skip('Entity', () => {
     const worker = new Worker();
 
     const callback = jest.fn();
-    Entity.changes.subscribe(worker, callback);
+    Entity.subscribe(worker, callback);
 
     worker.name = 'Dave';
 
@@ -57,7 +57,7 @@ describe.skip('Entity', () => {
     const worker = new Worker();
 
     const callback = jest.fn();
-    Entity.changes.subscribe(worker.list, callback);
+    Entity.subscribe(worker.list, callback);
 
     worker.list.push('1')
 
@@ -74,7 +74,7 @@ describe.skip('Entity', () => {
     const worker = new Worker();
 
     const callback = jest.fn();
-    Entity.changes.subscribe(worker, callback);
+    Entity.subscribe(worker, callback);
 
     worker.job = 'baker';
 

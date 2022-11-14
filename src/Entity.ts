@@ -4,6 +4,10 @@ type PropVisitor = (target: object, prop: string | symbol) => void;
 
 export class Entity {
   static changes = new EventBus<Entity>();
+  static subscribe(obj: object, callback: any) {
+    const orignal = Entity.getBaseObject(obj);
+    return Entity.changes.subscribe(orignal, callback);
+  }
   
   static globalRegistrationStack : Entity[] = [];
   static globalVistorByBase = new WeakMap<Entity, PropVisitor>();

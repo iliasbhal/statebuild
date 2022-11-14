@@ -48,10 +48,10 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
     ref.final = ref.current;
     ref.current = new Map();
 
-    const subscriptions : ReturnType<typeof Entity.changes.subscribe>[] = [];
+    const subscriptions : ReturnType<typeof Entity.subscribe>[] = [];
 
     ref.final.forEach((props, obj) => {
-      const subscription = Entity.changes.subscribe(obj, (prop) => {
+      const subscription = Entity.subscribe(obj, (prop) => {
         const isPropUsed = props.has(prop);
         if (isPropUsed) {
           forceRender();
