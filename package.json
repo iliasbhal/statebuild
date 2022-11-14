@@ -27,7 +27,7 @@
     "test": "jest",
     "build": "tsc",
     "build:watch": "tsc -w",
-    "prepublish": "yarn build & yarn sync"
+    "prepublish": "yarn build && yarn sync"
   },
   "peerDependencies": {},
   "dependencies": {
