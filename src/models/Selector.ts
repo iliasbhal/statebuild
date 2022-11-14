@@ -1,6 +1,6 @@
 import { Atom } from "./Atom";
 import { Entity } from './Entity';
-import { DependencyTree } from './lib/DependencyTree';
+import { DependencyTree } from '../utils/DependencyTree';
 
 type CallableSelector<V> = (() => V) & Selector<V>;
 

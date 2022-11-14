@@ -1,9 +1,9 @@
-import { EventBus } from "./lib/EventBus";
+import { EventBus } from "../utils/EventBus";
 
 type PropVisitor = (target: object, prop: string | symbol) => void;
 
 export class Entity {
-  static changes = new EventBus<Entity>();
+  private static changes = new EventBus<Entity>();
   static subscribe(obj: object, callback: any) {
     const orignal = Entity.getBaseObject(obj);
     return Entity.changes.subscribe(orignal, callback);
@@ -26,7 +26,7 @@ export class Entity {
 
   
   static originalObjectByProxy = new WeakMap<object>();
-  static getBaseObject(obj: Entity) : Entity {
+  static getBaseObject<E extends Entity>(obj: E) : E {
     return Entity.originalObjectByProxy.get(obj) ?? obj;
   }
 

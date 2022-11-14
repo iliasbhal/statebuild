@@ -1,5 +1,4 @@
 import { State } from '..';
-import { Selector } from '../Selector';
 
 describe('Selector', () => {
   it('can create a selector with other atoms', () =>{

@@ -1,4 +1,4 @@
-import { Entity } from "../Entity";
+import { Entity } from "../models/Entity";
 import { EventBus } from "./EventBus";
 
 export class DependencyTree {

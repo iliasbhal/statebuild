@@ -1,7 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { Atom, useSelector } from '..';
+import { Atom, useSelector } from '../..';
 
 describe('useSelector', () => {
   it('should return selector value', () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { State, useEntity } from '..';
+import { State, useEntity } from '../..';
 
 describe('useEntity', () => {
   class Count extends State {

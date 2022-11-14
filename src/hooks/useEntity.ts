@@ -1,6 +1,6 @@
 import React from "react";
-import { Entity } from './Entity';
-import { useForceRender } from './lib/useForceRender';
+import { Entity } from '../models';
+import { useForceRender } from '../utils/useForceRender';
 
 interface Type<T> extends Function { 
   new (...args: any[]): T; 

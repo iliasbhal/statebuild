@@ -1,4 +1,4 @@
-import { State, } from '..';
+import { State, } from '../';
 
 describe('Atom', () => {
   it('can retrieve atom value', () => {
