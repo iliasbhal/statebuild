@@ -1,4 +1,3 @@
-import { Entity } from "../models/Entity";
 import { EventBus } from "./EventBus";
 
 export class DependencyTree {
@@ -21,8 +20,7 @@ export class DependencyTree {
     this.cache.delete(key);
     this.events.publish(key, 'delete');
 
-    const orignalKey = Entity.getBaseObject(key);
-    this.dependentKeysByKey.get(orignalKey)?.forEach(dependentKey => {
+    this.dependentKeysByKey.get(key)?.forEach(dependentKey => {
       this.invalidate(dependentKey);
     });
   }

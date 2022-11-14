@@ -23,12 +23,18 @@ export class Selector<T> extends Atom<T> {
     Selector.selectorInstanceByCallable.set(callable, selector);
     return Object.assign(callable, selector);
   }
+  
+  static getBaseSelector(selector: Selector<any>) : Selector<any> {
+    const coreSelector = Selector.selectorInstanceByCallable.get(selector) || selector;
+    return Entity.getBaseObject(coreSelector);
+  }
 
   static subsribeToSelectorChanges(selector, callback) {
-    const coreSelector = Selector.selectorInstanceByCallable.get(selector) || selector;
-    const subscription = Selector.tree.events.subscribe(coreSelector, (messsage) => {
+    const dependencyKey = Selector.getBaseSelector(selector);
+    const subscription = Selector.tree.events.subscribe(dependencyKey, (messsage) => {
       setTimeout(() => {
-        callback(selector.get());
+        const nextValue = selector.get();
+        callback(nextValue);
       })
     })
 
@@ -37,13 +43,15 @@ export class Selector<T> extends Atom<T> {
 
   static autoRegisterSelectorDependencies(selector) {
     const registration = Entity.regsiterGlobalListener(selector, (parent, prop) => {
-      Selector.tree.register(selector, parent);
+      const dependencyKey = Entity.getBaseObject(selector);
+      const dependentKey = Entity.getBaseObject(parent);
+      Selector.tree.register(dependencyKey, dependentKey);
 
       // Ensure that get notify when one a dependency is updated
       // In that case we'll need to invalidate this and downstream selectors
       Entity.subscribe(parent, (updatedProp) => {
         if (updatedProp !== prop) return;
-        Selector.tree.invalidate(selector);
+        Selector.tree.invalidate(dependencyKey);
       });
     })
 
@@ -51,7 +59,8 @@ export class Selector<T> extends Atom<T> {
   }
 
   private select() {
-    const hasCachedValue = Selector.tree.verify(this);
+    const dependencyKey = Selector.getBaseSelector(this);
+    const hasCachedValue = Selector.tree.verify(dependencyKey);
     if (!hasCachedValue) {
       const registration = Selector.autoRegisterSelectorDependencies(this)
       const selected = this.selector();
