@@ -7,30 +7,31 @@ interface Type<T> extends Function {
 }
 
 export const useEntity = <T extends Entity>(entity: Type<T> | T) : T => {
-  const [instance] = React.useState(() => {
-    const isInstance = entity instanceof Entity;
-    if (isInstance) {
-      return entity;
-    }
-    
-    const isEntityConstrutor = entity.prototype instanceof Entity;
-    if (isEntityConstrutor) {
-      return new entity()
-    }
-    
-    throw new Error('Argument not supprted');
-  });
+  const [instance] = React.useState(() => getEntityInstance(entity));
   const detector = useDetectPropUsage(instance);
   return detector;
 }
 
+const getEntityInstance = <T extends Entity>(entity: Type<T> | T) : T => {
+  const isInstance = entity instanceof Entity;
+  if (isInstance) {
+    return entity;
+  }
+  
+  const isEntityConstrutor = entity.prototype instanceof Entity;
+  if (isEntityConstrutor) {
+    const Contructor = entity;
+    return new Contructor();
+  }
+  
+  throw new Error('Argument not supprted');
+}
+
 const useDetectPropUsage = <T extends Entity>(entity: T) => {
-  const usedPropsRef = React.useRef({
+  const [ref] = React.useState(() => ({
     current: new Map<object, Set<string | symbol>>(),
     final: new Map<object, Set<string | symbol>>(),
-  });
-
-  const ref = usedPropsRef.current 
+  }));
 
   const registration = Entity.regsiterGlobalListener(entity, (parent, key) => {
     if (!ref.current.has(parent)) {
