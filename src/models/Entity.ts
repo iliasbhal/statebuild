@@ -30,6 +30,13 @@ export class Entity {
     return Entity.originalObjectByProxy.get(obj) ?? obj;
   }
 
+  static checkShouldWrapWithProxy = (value) => {
+    const isAlreadyProxy = Entity.originalObjectByProxy.has(value);
+    const isObject = value instanceof Object;
+    const shouldWrapWithProxy = !isAlreadyProxy && isObject;
+    return shouldWrapWithProxy;
+  }
+
   private static handlePropUpdates = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
       get(target, prop, receiver) {
@@ -48,9 +55,7 @@ export class Entity {
       set(target, prop, newValue, receiver) {
         Entity.changes.publish(base, prop);
         
-        const isAlreadyProxy = Entity.originalObjectByProxy.has(newValue);
-        const isObject = newValue instanceof Object;
-        const shouldWrapWithProxy = !isAlreadyProxy && isObject;
+        const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(newValue)
         if (shouldWrapWithProxy) {
           const proxyValue = Entity.handlePropUpdates(newValue);
           return Reflect.set(target, prop, proxyValue, receiver);
