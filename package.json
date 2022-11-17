@@ -1,5 +1,5 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "name": "statebuild",
   "description": "React state management with OOP.",
   "main": "build/index.js",
@@ -21,20 +21,21 @@
   "homepage": "https://github.com/iliasbhal/statebuild",
   "scripts": {
     "setup": "yarn build && yarn sync",
-    "sync": "npm link && npm link statebuild", 
+    "sync": "npm link && npm link statebuild",
     "dev": "yarn setup && yarn build:watch",
     "deploy": "yarn test && yarn build && npm publish",
     "test": "jest",
-    "build": "tsc",
+    "build": "yarn build:ts && yarn build:dts",
+    "build:ts": "babel --extensions .ts,.tsx ./src -d ./build",
+    "build:dts": "tsc --emitDeclarationOnly",
     "build:watch": "tsc -w",
     "prepublish": "yarn build"
   },
   "peerDependencies": {},
-  "dependencies": {
-    "tslib": "^2.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.19.6",
+    "@babel/cli": "^7.19.3",
+    "@babel/core": "^7.20.2",
     "@babel/preset-env": "^7.19.4",
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",
@@ -53,8 +54,7 @@
     "jsdom-global": "^3.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "ts-jest": "^28.0.7",
-    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
     "typescript": "^4.2.3"
   }
 }
