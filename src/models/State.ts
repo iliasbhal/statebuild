@@ -1,6 +1,7 @@
 import { Entity } from './Entity';
 import type { Atom as AtomType } from './Atom';
 import type { Selector as SelectorType} from './Selector';
+import type { Reaction as ReactionType} from './Reaction';
 
 export class State extends Entity {
   static from<V>(value: V) {
