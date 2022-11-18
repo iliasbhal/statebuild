@@ -15,4 +15,10 @@ export class State extends Entity {
     const Selector = exports.Selector as typeof SelectorType;
     return Selector.createCallableSelector(selectorFn);
   }
+
+  static reaction(selectorFn: () => any) {
+    const exports = require('./Reaction');
+    const Reaction = exports.Reaction as typeof ReactionType;
+    return new Reaction(selectorFn);
+  }
 }
