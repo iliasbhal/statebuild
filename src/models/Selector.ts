@@ -13,24 +13,19 @@ export class Selector<T> extends Atom<T> {
     this.selector = selector;
   }
 
-  static selectorInstanceByCallable = new WeakMap<any, Selector<unknown>>
   static createCallableSelector<V>(selectorFn: () => V) : CallableSelector<V> {
     const selector = new Selector(selectorFn);
 
     const callable = () => selector.get();
     Object.setPrototypeOf(callable, Selector.prototype);
 
-    Selector.selectorInstanceByCallable.set(callable, selector);
+    const coreSelector = Entity.getBaseObject(selector);
+    Entity.originalObjectByProxy.set(callable, coreSelector);
     return Object.assign(callable, selector);
-  }
-  
-  static getBaseSelector(selector: Selector<any>) : Selector<any> {
-    const coreSelector = Selector.selectorInstanceByCallable.get(selector) || selector;
-    return Entity.getBaseObject(coreSelector);
   }
 
   static subsribeToSelectorChanges(selector, callback) {
-    const dependencyKey = Selector.getBaseSelector(selector);
+    const dependencyKey = Entity.getBaseObject(selector);
     const subscription = Selector.tree.events.subscribe(dependencyKey, (messsage) => {
       setTimeout(() => {
         const nextValue = selector.get();
@@ -42,7 +37,8 @@ export class Selector<T> extends Atom<T> {
   }
 
   static autoRegisterSelectorDependencies(selector: Selector<unknown>) {
-    const registration = Entity.regsiterGlobalListener(selector, (parent, prop) => {
+    const dependencyKey = Entity.getBaseObject(selector);
+    const registration = Entity.regsiterGlobalListener(dependencyKey, (parent, prop) => {
       selector.addDependency(parent);
 
       // Ensure that get notify when one a dependency is updated
@@ -68,7 +64,7 @@ export class Selector<T> extends Atom<T> {
   }
 
   private select() {
-    const dependencyKey = Selector.getBaseSelector(this);
+    const dependencyKey = Entity.getBaseObject(this);
     const hasCachedValue = Selector.tree.verify(dependencyKey);
     if (!hasCachedValue) {
       const registration = Selector.autoRegisterSelectorDependencies(this)
