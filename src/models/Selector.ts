@@ -41,21 +41,30 @@ export class Selector<T> extends Atom<T> {
     return subscription;
   }
 
-  static autoRegisterSelectorDependencies(selector) {
+  static autoRegisterSelectorDependencies(selector: Selector<unknown>) {
     const registration = Entity.regsiterGlobalListener(selector, (parent, prop) => {
-      const dependencyKey = Entity.getBaseObject(selector);
-      const dependentKey = Entity.getBaseObject(parent);
-      Selector.tree.register(dependencyKey, dependentKey);
+      selector.addDependency(parent);
 
       // Ensure that get notify when one a dependency is updated
       // In that case we'll need to invalidate this and downstream selectors
       Entity.subscribe(parent, (updatedProp) => {
         if (updatedProp !== prop) return;
-        Selector.tree.invalidate(dependencyKey);
+        selector.invalidate();
       });
     })
 
     return registration;
+  }
+
+  private addDependency(dependency: object) {
+    const dependencyKey = Entity.getBaseObject(this);
+    const dependentKey = Entity.getBaseObject(dependency);
+    return Selector.tree.register(dependencyKey, dependentKey);
+  }
+
+  private invalidate() {
+    const dependencyKey = Entity.getBaseObject(this);
+    return Selector.tree.invalidate(dependencyKey);
   }
 
   private select() {
