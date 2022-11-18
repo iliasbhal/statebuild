@@ -1,9 +1,11 @@
 {
-  "version": "0.0.8",
+  "version": "0.0.9",
   "name": "statebuild",
   "description": "React state management with OOP.",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
+  "source": "src/index.ts",
+  "files": ["dist/*"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iliasbhal/statebuild.git"
