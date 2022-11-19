@@ -4,22 +4,22 @@ describe('Reaction', () => {
   jest.useFakeTimers();
 
   it('it run when defined', () => {
+    const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
     })
 
-    const atom = State.from(true);
     State.reaction(reactionSpy);
 
     expect(reactionSpy).toHaveBeenCalledTimes(1);
   });
 
   it('it reruns when dependency is updated', () => {
+    const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
     })
 
-    const atom = State.from(true);
     State.reaction(reactionSpy);
     reactionSpy.mockClear();
 
@@ -29,11 +29,11 @@ describe('Reaction', () => {
   });
 
   it('can stop triggering reactions', () => {
+    const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
     })
 
-    const atom = State.from(true);
     const reaction = State.reaction(reactionSpy);
     reactionSpy.mockClear();
     reaction.stop()
@@ -50,11 +50,11 @@ describe('Reaction', () => {
   })
 
   it('can restart triggering reaction', () => {
+    const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
     })
 
-    const atom = State.from(true);
     const reaction = State.reaction(reactionSpy);
     reactionSpy.mockClear();
     reaction.stop();
