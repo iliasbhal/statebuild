@@ -2,8 +2,6 @@ import { Atom } from "./Atom";
 import { Entity } from './Entity';
 import { DependencyTree } from '../utils/DependencyTree';
 
-type CallableSelector<V> = (() => V) & Selector<V>;
-
 export class Selector<T> extends Atom<T> {
   static tree = new DependencyTree();
 
@@ -11,17 +9,6 @@ export class Selector<T> extends Atom<T> {
   constructor(selector: () => T) {
     super(null);
     this.selector = selector;
-  }
-
-  static createCallableSelector<V>(selectorFn: () => V) : CallableSelector<V> {
-    const selector = new Selector(selectorFn);
-
-    const callable = () => selector.get();
-    Object.setPrototypeOf(callable, Selector.prototype);
-
-    const coreSelector = Entity.getBaseObject(selector);
-    Entity.originalObjectByProxy.set(callable, coreSelector);
-    return Object.assign(callable, selector);
   }
 
   static subsribeToSelectorChanges(selector, callback) {

@@ -5,16 +5,17 @@ import type { Reaction as ReactionType} from './Reaction';
 
 export class State extends Entity {
   static from<V>(value: V) {
-    const exports = require('./Atom');
-    const Atom = exports.Atom as typeof AtomType;
+    const Atom = require('./Atom').Atom as typeof AtomType;;
     const atom = new Atom(value);
-    return atom;
+
+    return Atom.makeCallable(atom, Atom);
   }
 
-  static select<V>(selectorFn: () => V) {
-    const exports = require('./Selector');
-    const Selector = exports.Selector as typeof SelectorType;
-    return Selector.createCallableSelector(selectorFn);
+  static select<V>(selectorFn: () => V) : (() => V) & SelectorType<V> {
+    const Selector = require('./Selector').Selector as typeof SelectorType;
+    const Atom = require('./Atom').Atom as typeof AtomType;
+    const selector = new Selector(selectorFn);
+    return Atom.makeCallable(selector, Selector);
   }
 
   static reaction(selectorFn: () => any) {

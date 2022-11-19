@@ -11,4 +11,12 @@ describe('Atom', () => {
     atom.set(4);
     expect(atom.get()).toBe(4);
   })
+
+  it('can be called like a function', () => {
+    const atom = State.from(3);
+    expect(atom()).toBe(3)
+
+    atom.set(4);
+    expect(atom()).toBe(4);
+  })
 })
