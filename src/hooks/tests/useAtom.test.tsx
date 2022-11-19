@@ -1,11 +1,11 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { Atom, useAtom } from '../..';
+import { State, useAtom } from '../..';
 
 describe('useAtom', () => {
   it('should display initial value', () => {
-    const countAtom = Atom.from(3);
+    const countAtom = State.from(3);
     const Wrapper = () => {
       const [count, setCount] = useAtom(countAtom);
       return (
@@ -21,7 +21,7 @@ describe('useAtom', () => {
   })
 
   it('should update atom when setState is called', () => {
-    const countAtom = Atom.from(3);
+    const countAtom = State.from(3);
     const Wrapper = () => {
       const [count, setCount] = useAtom(countAtom);
       return (
@@ -43,7 +43,7 @@ describe('useAtom', () => {
   });
 
   it('should rerender when atom update from outside the component', () => {
-    const countAtom = Atom.from(3);
+    const countAtom = State.from(3);
 
     const Wrapper = () => {
       const [count, setCount] = useAtom(countAtom);
@@ -68,7 +68,7 @@ describe('useAtom', () => {
   })
 
   it('should batch rerenders when atom is updated from inside the component', () => {
-    const countAtom = Atom.from(3);
+    const countAtom = State.from(3);
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
@@ -99,7 +99,7 @@ describe('useAtom', () => {
   })
 
   it('should batch rerenders when atom is updated from outide the component', () => {
-    const countAtom = Atom.from(3);
+    const countAtom = State.from(3);
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
@@ -130,8 +130,8 @@ describe('useAtom', () => {
   })
 
   it('should rerender every component reading a specific atom', () => {
-    const sharedAtom = Atom.from(3);
-    const notSharedAtom = Atom.from(3);
+    const sharedAtom = State.from(3);
+    const notSharedAtom = State.from(3);
 
     const rerenderSpy1 = jest.fn();
     const Component1 = () => {

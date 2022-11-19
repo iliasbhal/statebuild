@@ -1,7 +1,6 @@
-import { State } from "./State";
 import { Entity } from './Entity';
 
-export class Atom<T> extends State {
+export class Atom<T> extends Entity {
   value: T;
 
   constructor(value: T) {

@@ -1,12 +1,12 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { Atom, useSelector } from '../..';
+import { State, useSelector } from '../..';
 
 describe('useSelector', () => {
   it('should return selector value', () => {
-    const count = Atom.from(3);
-    const doubleSelector = Atom.select(() => {
+    const count = State.from(3);
+    const doubleSelector = State.select(() => {
       return count.get() * 2;
     })
 
@@ -29,8 +29,8 @@ describe('useSelector', () => {
 
   it('should render updated selector value', async () => {
     jest.useFakeTimers();
-    const count = Atom.from(3);
-    const doubleSelector = Atom.select(() => {
+    const count = State.from(3);
+    const doubleSelector = State.select(() => {
       return count.get() * 2;
     })
 
