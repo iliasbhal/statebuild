@@ -1,7 +1,7 @@
 import { State } from '../../models';
-import { select } from '../select';
+import { select } from '../@select';
 
-describe('@select', () => {
+describe.only('@select', () => {
   const fullNameSpy = jest.fn();
   const reverseFullNameSpy = jest.fn();
 
