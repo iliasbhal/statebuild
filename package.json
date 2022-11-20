@@ -29,7 +29,7 @@
     "test": "jest",
     "build": "yarn build:ts && yarn build:dts",
     "build:ts": "rm -rf ./build && babel --extensions .ts,.tsx ./src -d ./build --ignore '**/tests'",
-    "build:dts": "tsc --emitDeclarationOnly",
+    "build:dts": "tsc --emitDeclarationOnly --project ./tsconfig.build.json",
     "build:watch": "tsc -w",
     "prepublish": "yarn build"
   },
