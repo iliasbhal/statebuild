@@ -11,14 +11,9 @@ export class Selector<T> extends Atom<T> {
     this.selector = selector;
   }
 
-  static subsribeToSelectorChanges(selector, callback) {
+  static subsribeToSelectorChanges<T>(selector: Selector<T>, callback: () => void) {
     const dependencyKey = Entity.getBaseObject(selector);
-    const subscription = Selector.tree.events.subscribe(dependencyKey, (messsage) => {
-      setTimeout(() => {
-        const nextValue = selector.get();
-        callback(nextValue);
-      })
-    })
+    const subscription = Selector.tree.invalidations.subscribe(dependencyKey, () => callback())
 
     return subscription;
   }

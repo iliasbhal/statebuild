@@ -10,8 +10,9 @@ export class Reaction extends Selector<object> {
   start() {
     this.get();
 
-    const subscrption = Selector.subsribeToSelectorChanges(this, () => this.get()); 
-    this.subscription = subscrption;    
+    this.subscription = Selector.subsribeToSelectorChanges(this, () => {
+      setTimeout(() => this.get());
+    }); 
   }
 
   stop() {

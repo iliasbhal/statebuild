@@ -3,7 +3,7 @@ import { EventBus } from "./EventBus";
 export class DependencyTree {
   cache = new Set<object>();
   dependentKeysByKey = new Map<object, Set<object>>();
-  events = new EventBus(); 
+  invalidations = new EventBus<object>(); 
 
   register(key: any, dependent: any) {
     this.cache.add(key);
@@ -18,7 +18,7 @@ export class DependencyTree {
   invalidate(key: any) {
     // remove all caches of selector that have key as dependncy;
     this.cache.delete(key);
-    this.events.publish(key, 'delete');
+    this.invalidations.publish(key);
 
     this.dependentKeysByKey.get(key)?.forEach(dependentKey => {
       this.invalidate(dependentKey);
