@@ -1,7 +1,4 @@
 {
   "extends": "./tsconfig.json",
   "exclude": ["**/tests"],
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.build.jsoninfo"
-  },
 }

@@ -10,7 +10,6 @@
     "target": "ESNext",
     "lib": ["esnext", "dom"],
     "importHelpers": true,
-    "incremental": true,
     "declaration": true, // output .d.ts declaration files for consumers
     "sourceMap": true, // output .js.map sourcemap files for consumers
 
