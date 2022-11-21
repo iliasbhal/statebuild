@@ -1,5 +1,5 @@
 {
-  "version": "0.0.15",
+  "version": "0.0.16",
   "name": "statebuild",
   "description": "React state management with OOP.",
   "main": "build/index.js",
@@ -30,7 +30,7 @@
     "deploy": "yarn test && yarn build && npm publish",
     "test": "jest",
     "build": "yarn build:ts && yarn build:dts",
-    "build:ts": "rm -rf ./build && babel --extensions .ts,.tsx ./src --out-file ./build/index.js --ignore '**/tests'",
+    "build:ts": "rm -rf ./build && babel --extensions .ts,.tsx ./src -d ./build --ignore '**/tests'",
     "build:dts": "tsc --emitDeclarationOnly --project ./tsconfig.build.json",
     "build:watch": "yarn build:ts -w & yarn build:dts -w",
     "prepublish": "yarn build"
