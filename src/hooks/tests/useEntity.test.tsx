@@ -463,8 +463,8 @@ describe('useEntity', () => {
 
     const people = new People();
 
-    let currentEffect = 0;
-    const clickEffect = [
+    let testStepIdx = 0;
+    const testSteps = [
       () => first.firstName = 'First(updated)',
       () => people.people.push(second),
       () => second.firstName = 'Second(updated)',
@@ -481,8 +481,8 @@ describe('useEntity', () => {
         <div
           data-testid="container-store"
           onClick={() => {
-            clickEffect[currentEffect]();
-            currentEffect++;
+            testSteps[testStepIdx]();
+            testStepIdx++;
           }}
         >
           {store.people.map((person) => `${person.firstName},`)}
