@@ -30,7 +30,3 @@ export const select : MethodDecorator  = (desc: any) => {
     }
   }
 }
-
-export const memo : MethodDecorator = (desc: any) => {
-
-}
