@@ -91,6 +91,52 @@ describe('Selector', () => {
     expect(doubleSelector).toHaveBeenCalledTimes(1);
   })
 
+  it('memoize results when passed arguments', () => {
+    const count = State.from(3);
+    const doubleSelector = jest.fn();
+    const doubleWith = State.select((num: number) => {
+      doubleSelector(num);
+      return count.get() * num;
+    });
+
+    expect(doubleWith(0)).toBe(0);
+    expect(doubleWith(0)).toBe(0);
+    expect(doubleSelector).toHaveBeenCalledTimes(1);
+    expect(doubleSelector).toHaveBeenCalledWith(0);
+    doubleSelector.mockClear();
+
+    expect(doubleWith(2)).toBe(6);
+    expect(doubleWith(2)).toBe(6);
+    expect(doubleSelector).toHaveBeenCalledTimes(1);
+    expect(doubleSelector).toHaveBeenCalledWith(2);
+  });
+
+  it('invalidates memoized results when dependency changes', () => {
+    const count = State.from(3);
+    const doubleSelector = jest.fn();
+    const doubleWith = State.select((num: number) => {
+      doubleSelector(num);
+      return count.get() * num;
+    });
+
+    doubleWith(0);
+    doubleWith(2);
+    doubleSelector.mockClear();
+
+    count.set(1);
+
+    expect(doubleWith(0)).toBe(0);
+    expect(doubleWith(0)).toBe(0);
+    expect(doubleSelector).toHaveBeenCalledTimes(1);
+    expect(doubleSelector).toHaveBeenCalledWith(0);
+    doubleSelector.mockClear();
+
+    expect(doubleWith(2)).toBe(2);
+    expect(doubleWith(2)).toBe(2);
+    expect(doubleSelector).toHaveBeenCalledTimes(1);
+    expect(doubleSelector).toHaveBeenCalledWith(2);
+  })
+
   it('accepts a selectors as arguments', () => {
     const count = State.from(3);
     const selector = jest.fn();

@@ -1,6 +1,8 @@
 import { Selector } from "./Selector";
 
-export class Reaction extends Selector<object> {
+type ReactionCallback = () => any;
+
+export class Reaction extends Selector<ReactionCallback> {
   constructor(selector: () => any) {
     super(selector);
     this.start();
