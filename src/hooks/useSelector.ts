@@ -1,7 +1,7 @@
 import React from 'react';
-import { Selector } from '../models';
+import { Selector, SelectorCallback } from '../models';
 
-export const useSelector = <A>(selector: Selector<A>) : A => {
+export const useSelector = <Fn extends SelectorCallback>(selector: Selector<Fn>) : ReturnType<Fn> => {
   const [value, setValue] = React.useState(() => selector.get());
 
   React.useEffect(() => {
