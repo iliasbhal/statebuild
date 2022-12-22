@@ -46,7 +46,7 @@ export class Entity {
           const lastKey = Entity.globalRegistrationStack[Entity.globalRegistrationStack.length - 1];
           if (lastKey) {
             const propVisitor = Entity.globalVistorByBase.get(lastKey);
-            propVisitor(base, prop);
+            propVisitor?.(base, prop);
           }
         }
 
