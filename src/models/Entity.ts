@@ -24,6 +24,15 @@ export class Entity {
     }
   }
 
+  static getPeekVisitor() {
+    const lastKey = Entity.globalRegistrationStack[Entity.globalRegistrationStack.length - 1];
+    if (lastKey) {
+      return Entity.globalVistorByBase.get(lastKey);
+    }
+
+    return null;
+  }
+
   
   static originalObjectByProxy = new WeakMap<object>();
   static getBaseObject<E extends Entity>(obj: E) : E {
@@ -43,10 +52,9 @@ export class Entity {
         const value = Reflect.get(target, prop, receiver);
 
         if (typeof value !== 'function') {
-          const lastKey = Entity.globalRegistrationStack[Entity.globalRegistrationStack.length - 1];
-          if (lastKey) {
-            const propVisitor = Entity.globalVistorByBase.get(lastKey);
-            propVisitor?.(base, prop);
+          const peekVisitor = Entity.getPeekVisitor()
+          if (peekVisitor) {
+            peekVisitor(base, prop);
           }
         }
 
