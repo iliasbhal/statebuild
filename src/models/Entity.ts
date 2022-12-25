@@ -36,7 +36,7 @@ export class Entity {
   
   static originalObjectByProxy = new WeakMap<object>();
   static getBaseObject<E extends Entity>(obj: E) : E {
-    return Entity.originalObjectByProxy.get(obj) ?? obj;
+    return Entity.originalObjectByProxy.get(obj) || obj;
   }
 
   static checkShouldWrapWithProxy = (value) => {
