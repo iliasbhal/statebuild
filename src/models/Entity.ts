@@ -39,7 +39,23 @@ export class Entity {
     return Entity.originalObjectByProxy.get(obj) || obj;
   }
 
-  static checkShouldWrapWithProxy = (value) => {
+  static stablePropMap = new WeakMap<object, Set<string>>();
+  static makePropStable(obj: object, prop: string) {
+    const base = Entity.getBaseObject(obj);
+    if (!Entity.stablePropMap.has(base)) {
+      Entity.stablePropMap.set(base, new Set());
+    }
+
+    const stableProps = Entity.stablePropMap.get(base);
+    stableProps.add(prop);
+  }
+
+  static checkShouldWrapWithProxy = (obj, prop, value) => {
+    const shouldSkip = Entity.stablePropMap.get(obj)?.has(prop);
+    if (shouldSkip) {
+      return false;
+    }
+
     const isAlreadyProxy = Entity.originalObjectByProxy.has(value);
     const isObject = value instanceof Object;
     const shouldWrapWithProxy = !isAlreadyProxy && isObject;
@@ -63,7 +79,7 @@ export class Entity {
       set(target, prop, newValue, receiver) {
         Entity.changes.publish(base, prop);
         
-        const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(newValue)
+        const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(base, prop, newValue)
         if (shouldWrapWithProxy) {
           const proxyValue = Entity.handlePropUpdates(newValue);
           return Reflect.set(target, prop, proxyValue, receiver);
