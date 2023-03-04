@@ -1,4 +1,4 @@
-<img width="100%" alt="repo_hero" src="https://user-images.githubusercontent.com/9442803/201542658-1cb5c4b6-dba1-4fc2-8520-237f1cd7849c.png">
+<img width="100%" alt="repo_hero" src="https://user-images.githubusercontent.com/9442803/222896074-be4c077b-01bd-442d-bc27-1e77fca92677.png">
 
 
 ## ✨ What is Statebuild?
