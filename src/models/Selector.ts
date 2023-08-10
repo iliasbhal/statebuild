@@ -1,5 +1,5 @@
 import { Atom } from "./Atom";
-import { Entity } from './Entity';
+import { Entity } from './base/Entity';
 import { DependencyTree } from '../utils/DependencyTree';
 import { MultiWeakMap } from '../utils/MultiWeakMap';
 
@@ -8,6 +8,7 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
   static tree = new DependencyTree();
   static cache = new WeakMap<Selector<any>, MultiWeakMap<any, Selector<any>>>();
 
+  selectorFn : Fn;
   selectorName: string;
   constructor(selector: Fn) {
     super(null);
@@ -16,10 +17,10 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     Selector.cache.set(this, cache);
     cache.mset([], this);
 
-    this.selector = selector;
+    this.selectorFn = selector;
   }
 
-  static makeCallableSelector<A extends Selector<any>>(selector: A) : A['selector'] & A {
+  static makeCallableSelector<A extends Selector<any>>(selector: A) : A['selectorFn'] & A {
     const callable = (...args) => selector.get(...args);
 
     Object.setPrototypeOf(callable, Selector.prototype);
@@ -43,16 +44,27 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     const dependencyKey = Entity.getBaseObject(selector);
     const registration = Entity.regsiterGlobalListener(dependencyKey, (parent, prop) => {
       selector.addDependency(parent);
-
+      console.log('REGISTRATION');
       // Ensure that get notify when one a dependency is updated
       // In that case we'll need to invalidate this and downstream selectors
       Entity.subscribe(parent, (updatedProp) => {
         if (updatedProp !== prop) return;
+        console.log('REGISTRATION / REGISTRATION', updatedProp);
         selector.invalidate();
       });
     })
 
     return registration;
+  }
+
+  static autoRegisterAsyncSelectorDependencies<P extends Promise<any>, T extends Selector<(...args : any[]) => P>>(selector:  T, promise: P) {
+    const registration = Selector.autoRegisterSelectorDependencies(selector);
+    
+    TrackedPromise.open(selector);
+    return promise.finally(() => {
+      TrackedPromise.close(selector);
+      registration.unregister();
+    });
   }
 
   private addDependency(dependency: object) {
@@ -71,15 +83,34 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     cache.clear();
   }
 
+  static runSelectorFn(selector: Selector<any>, args: any[]) {
+    // When running the selector we also keep track of what has been read
+    // This is how we can determine what data is a dependency
+    const registration = Selector.autoRegisterSelectorDependencies(selector)
+
+    if (global.Promise != TrackedPromise) {
+      const OriginalPromise = Promise;
+      global.Promise = TrackedPromise;
+    }
+
+    const selectedValue = selector.selectorFn(...args);
+    registration.unregister();
+
+    const isPromise = selectedValue instanceof Promise;
+    if(isPromise) {
+      Selector.autoRegisterAsyncSelectorDependencies(selector, selectedValue);
+    }
+
+    return selectedValue;
+  }
+
   select(...args: unknown[]) {
     const dependencyKey = Entity.getBaseObject(this);
     const hasCachedValue = Selector.tree.verify(dependencyKey);
     if (!hasCachedValue) {
-      const registration = Selector.autoRegisterSelectorDependencies(this)
-      const selected = this.selector(...args);
-      registration.unregister();
-      super.set(selected);
-    } 
+      const selectedValue = Selector.runSelectorFn(this, args)
+      super.set(selectedValue);
+    }
 
     return super.get();
   }
@@ -95,7 +126,7 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
       return cache.mget(...args)
     }
 
-    const next = new Selector(this.selector);
+    const next = new Selector(this.selectorFn);
     cache.mset(args, next);
     return next;
   }
@@ -103,5 +134,40 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
   get = (...args) => {
     const cache = this.getSelectorForArgs(...args);
     return cache.select(...args);
+  }
+}
+
+// Zone 1 |--------*--------*-------*----------|
+// Zone 2                |------*---------*---------------*---|
+// Zone 2      *      *                *              *         
+
+class TrackedPromise extends Promise<any> {
+  static zones = new Set<Selector<any>>();
+
+  static open(selector: Selector<any>) {
+    this.zones.add(selector);
+
+    console.log("ADDED", this.zones);
+  }
+
+  static close(selector: Selector<any>) {
+    this.zones.delete(selector);
+
+    console.log("DELETED",this.zones);
+  }
+
+  static get [Symbol.species]() {
+    return Promise;
+  }
+
+  constructor(executor) {
+    // console.log('NEW PROMISE', executor.toString());
+    // try {
+    //   throw new Error('FIND STASKTRACE');
+    // } catch (err) {
+    //   console.log('ERR', err);
+    // }
+
+    super(executor);
   }
 }
