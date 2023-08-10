@@ -8,7 +8,7 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
   static tree = new DependencyTree();
   static cache = new WeakMap<Selector<any>, MultiWeakMap<any, Selector<any>>>();
 
-  selector : Fn;
+  selectorName: string;
   constructor(selector: Fn) {
     super(null);
 
