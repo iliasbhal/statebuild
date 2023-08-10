@@ -6,6 +6,12 @@ export class DependencyTree {
   invalidations = new EventBus<object>(); 
 
   register(key: any, dependent: any) {
+    const isDifferent = dependent !== key; 
+    if (!isDifferent) {
+      // Cannot be dependent on themselves
+      return;
+    }
+
     this.cache.add(key);
 
     if (!this.dependentKeysByKey.has(dependent)) {
