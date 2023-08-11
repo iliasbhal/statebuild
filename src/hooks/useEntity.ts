@@ -8,8 +8,10 @@ interface Type<T> extends Function {
 
 export const useEntity = <T extends Entity>(entity: Type<T> | T) : T => {
   const [instance] = React.useState(() => getEntityInstance(entity));
-  const detector = useDetectPropUsage(instance);
-  return detector;
+  
+  useDetectUsageAndRerenderOnChange(instance);
+
+  return instance;
 }
 
 const getEntityInstance = <T extends Entity>(entity: Type<T> | T) : T => {
@@ -27,7 +29,7 @@ const getEntityInstance = <T extends Entity>(entity: Type<T> | T) : T => {
   throw new Error('Argument not supprted');
 }
 
-const useDetectPropUsage = <T extends Entity>(entity: T) => {
+const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
   const [ref] = React.useState(() => ({
     current: new Map<object, Set<string | symbol>>(),
     final: new Map<object, Set<string | symbol>>(),
@@ -68,6 +70,4 @@ const useDetectPropUsage = <T extends Entity>(entity: T) => {
       })
     }
   });
-
-  return entity;
 }
