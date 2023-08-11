@@ -44,12 +44,10 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     const dependencyKey = Entity.getBaseObject(selector);
     const registration = Entity.regsiterGlobalListener(dependencyKey, (parent, prop) => {
       selector.addDependency(parent);
-      console.log('REGISTRATION');
       // Ensure that get notify when one a dependency is updated
       // In that case we'll need to invalidate this and downstream selectors
       Entity.subscribe(parent, (updatedProp) => {
         if (updatedProp !== prop) return;
-        console.log('REGISTRATION / REGISTRATION', updatedProp);
         selector.invalidate();
       });
     })
@@ -57,17 +55,17 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     return registration;
   }
 
-  static autoRegisterAsyncSelectorDependencies<P extends Promise<any>, T extends Selector<(...args : any[]) => P>>(selector:  T, promise: P) {
-    const registration = Selector.autoRegisterSelectorDependencies(selector);
+  // static autoRegisterAsyncSelectorDependencies<P extends Promise<any>, T extends Selector<(...args : any[]) => P>>(selector:  T, promise: P) {
+  //   const registration = Selector.autoRegisterSelectorDependencies(selector);
     
-    TrackedPromise.open(selector);
-    return promise.finally(() => {
-      TrackedPromise.close(selector);
-      registration.unregister();
-    });
-  }
+  //   TrackedPromise.open(selector);
+  //   return promise.finally(() => {
+  //     TrackedPromise.close(selector);
+  //     registration.unregister();
+  //   });
+  // }
 
-  private addDependency(dependency: object) {
+  addDependency(dependency: object) {
     const dependencyKey = Entity.getBaseObject(this);
     const dependentKey = Entity.getBaseObject(dependency);
     return Selector.tree.register(dependencyKey, dependentKey);
@@ -88,18 +86,13 @@ export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> 
     // This is how we can determine what data is a dependency
     const registration = Selector.autoRegisterSelectorDependencies(selector)
 
-    if (global.Promise != TrackedPromise) {
-      const OriginalPromise = Promise;
-      global.Promise = TrackedPromise;
-    }
-
     const selectedValue = selector.selectorFn(...args);
     registration.unregister();
 
-    const isPromise = selectedValue instanceof Promise;
-    if(isPromise) {
-      Selector.autoRegisterAsyncSelectorDependencies(selector, selectedValue);
-    }
+    // const isPromise = selectedValue instanceof Promise;
+    // if(isPromise) {
+    //   Selector.autoRegisterAsyncSelectorDependencies(selector, selectedValue);
+    // }
 
     return selectedValue;
   }

@@ -1,4 +1,4 @@
-import { Entity } from './Entity';
+import { Entity } from './base/Entity';
 
 export class Atom<T> extends Entity {
   value: T;

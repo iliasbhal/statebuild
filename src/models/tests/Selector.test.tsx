@@ -343,38 +343,7 @@ describe('Selector', () => {
     expect(updatedNameSpy).not.toHaveBeenCalled();
   })
 
-  it.skip('should handle reading async selectors', async () => {
-    const wait = (timeout: number) => new Promise((r) => setTimeout(r, timeout));
-
-    const selectorSpy = jest.fn();
-    const atom = State.from(3);
-    const doubleAsync = State.select(async () => {
-      await wait(300);
-      return atom.get() * 2
-    });
-
-    const doubleAgainAsync = State.select(async () => {
-      selectorSpy();
-      await wait(300);
-      return await doubleAsync.get() * 2
-    });
-
-    await expect(doubleAgainAsync.get()).resolves.toBe(12);
-    expect(selectorSpy).toHaveBeenCalledTimes(1);
-    selectorSpy.mockClear();
-
-
-    console.log('-------------------')
-
-    await expect(doubleAgainAsync.get()).resolves.toBe(12);
-    // expect(selectorSpy).not.toHaveBeenCalled();
-
-    await wait(1300);
-    // atom.set(1);
-    // await expect(doubleAgainAsync.get()).resolves.toBe(4);
-  })
-
-  it('test async selectors', async () => {
+  it('should register dependencies of async selector (when dependencies are defined in the same sync event loop)', async () => {
     const wait = (timeout: number) => new Promise((r) => setTimeout(r, timeout));
     const atom = State.from(3);
     const atom2 = State.from(2);
@@ -383,10 +352,9 @@ describe('Selector', () => {
       async () => {
         selectorSpy();
         const value = atom.get();
-        await wait(200);
-        
         const multiplyWith = atom2.get();
-        console.log('SELECTOR END');
+        await wait(200);
+
         return value * multiplyWith;
       }
     );
@@ -407,5 +375,34 @@ describe('Selector', () => {
 
     await expect(doubleAsync.get()).resolves.toBe(9);
     expect(selectorSpy).not.toHaveBeenCalled();
+  })
+
+  it('should register dependencies of async selector (when dependencies are defined after the initial sync event loop)', async () => {
+    const wait = (timeout: number) => new Promise((r) => setTimeout(r, timeout));
+
+    const selectorSpy = jest.fn();
+    const atom = State.from(3);
+    const doubleAsync = State.selectAsync(({ get }) => async () => {
+      await wait(300);
+      return get(atom) * 2
+    });
+
+    const doubleAgainAsync = State.selectAsync(({ get }) => async () => {
+      selectorSpy();
+      await wait(300);
+      return await get(doubleAsync) * 2
+    });
+
+    await expect(doubleAgainAsync.get()).resolves.toBe(12);
+    await expect(doubleAgainAsync.get()).resolves.toBe(12);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
+
+    atom.set(1);
+
+    await expect(doubleAgainAsync.get()).resolves.toBe(4);
+    await expect(doubleAgainAsync.get()).resolves.toBe(4);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
   })
 })

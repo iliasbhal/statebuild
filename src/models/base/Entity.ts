@@ -1,4 +1,4 @@
-import { EventBus } from "../utils/EventBus";
+import { EventBus } from "../../utils/EventBus";
 
 type PropVisitor = (target: object, prop: string | symbol) => void;
 
@@ -51,8 +51,13 @@ export class Entity {
   }
 
   static checkShouldWrapWithProxy = (obj, prop, value) => {
-    const shouldSkip = Entity.stablePropMap.get(obj)?.has(prop);
-    if (shouldSkip) {
+    const isStableProp = Entity.stablePropMap.get(obj)?.has(prop);
+    if (isStableProp) {
+      return false;
+    }
+
+    const isPromise = value instanceof Promise; 
+    if (isPromise) {
       return false;
     }
 
@@ -62,18 +67,20 @@ export class Entity {
     return shouldWrapWithProxy;
   }
 
-  private static handlePropUpdates = <T extends object>(base: T) : T => {
+  private static wrap = <T extends object>(base: T) : T => {
     const proxy = new Proxy(base, {
       get(target, prop, receiver) {
         const value = Reflect.get(target, prop, receiver);
 
         if (typeof value !== 'function') {
-          const peekVisitor = Entity.getPeekVisitor()
-          if (peekVisitor) {
-            peekVisitor(base, prop);
+          const visit = Entity.getPeekVisitor()
+          if (visit) {
+            // console.log('VISIT', base, prop);
+            visit(base, prop);
           }
         }
 
+        // console.log('VSITE 2',  base, prop);
         return value
       },
       set(target, prop, newValue, receiver) {
@@ -81,7 +88,7 @@ export class Entity {
         
         const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(base, prop, newValue)
         if (shouldWrapWithProxy) {
-          const proxyValue = Entity.handlePropUpdates(newValue);
+          const proxyValue = Entity.wrap(newValue);
           return Reflect.set(target, prop, proxyValue, receiver);
         }
 
@@ -94,6 +101,6 @@ export class Entity {
   }
 
   constructor() {
-    return Entity.handlePropUpdates(this);
+    return Entity.wrap(this);
   }
 }

@@ -23,7 +23,28 @@ export class State extends Entity {
     return Selector.makeCallableSelector(selector);
   }
 
+  static selectAsync<Fn extends SelectorCallback>(selectorFnFactory: (asyncCtx: AsyncSelectorContext) => Fn) {
+    const asyncCtx = new AsyncSelectorContext();
+    const selectorFn = selectorFnFactory(asyncCtx);
+    const selector = State.select(selectorFn);
+
+    asyncCtx.selector = selector;
+
+    return selector;
+  }
+
   static reaction(selectorFn: () => any) {
     return new Reaction(selectorFn);
+  }
+}
+
+class AsyncSelectorContext {
+  selector: Selector<any>;
+
+  get = <A extends Atom<any>>(atom: A) : A['value'] => {
+    const registration = Selector.autoRegisterSelectorDependencies(this.selector);
+    const value = atom.get();
+    registration.unregister();
+    return value;
   }
 }
