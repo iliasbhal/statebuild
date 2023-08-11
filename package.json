@@ -1,7 +1,7 @@
 {
   "version": "0.0.24",
   "name": "statebuild",
-  "description": "React state management with OOP.",
+  "description": "The Almost Invisible State Management",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "source": "src/index.ts",
