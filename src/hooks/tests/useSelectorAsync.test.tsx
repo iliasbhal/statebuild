@@ -1,7 +1,5 @@
-import React from 'react';
-import * as testingLib from '@testing-library/react'
+import * as testingLib from '@testing-library/react-hooks'
 import { State, useSelectorAsync } from '../..';
-import { act } from 'react-dom/test-utils';
 
 describe('useSelectorAsync', () => {
   it('should return async selector value and state', async () => {
@@ -12,28 +10,19 @@ describe('useSelectorAsync', () => {
       return double;
     })
 
-    const rerenderSpy = jest.fn();
-    const Wrapper = () => {
-      const [double, meta] = useSelectorAsync(delayDouble);
-      rerenderSpy();
-      return (
-        <div data-testid="container">
-          (data: {double}) (isLoading: {meta.isLoading.toString()}) (hasError: {!!meta.error})
-        </div>
-      )
-    }
+    const wrapper = testingLib.renderHook(() => useSelectorAsync(delayDouble));
 
-    const wrapper = testingLib.render(<Wrapper />);
+    expect(wrapper.result.current).toMatchObject([null,{ 
+      isLoading: true,
+      error: null,
+    }]);
 
-    const container = wrapper.getByTestId('container');
-    expect(rerenderSpy).toHaveBeenCalledTimes(1);
-    expect(container).toHaveTextContent('isLoading: true');
-    expect(container).toHaveTextContent('(data: )')
+    await wrapper.waitForNextUpdate();
 
-    await testingLib.waitFor(() =>{
-      expect(container).toHaveTextContent('isLoading: false');
-      expect(container).toHaveTextContent('(data: 6)')
-    })
+    expect(wrapper.result.current).toMatchObject([6, { 
+      isLoading: false,
+      error: null,
+    }]);
   })
 
   it('should render updated selector value', async () => {
@@ -44,38 +33,35 @@ describe('useSelectorAsync', () => {
       return double;
     })
 
-    const Wrapper = () => {
-      const [double, meta] = useSelectorAsync(delayDouble);
-      return (
-        <div data-testid="container" onClick={() => count.set(1)}>
-          (data: {double}) (isLoading: {meta.isLoading.toString()}) (hasError: {!!meta.error})
-        </div>
-      )
-    }
+    const wrapper = testingLib.renderHook(() => useSelectorAsync(delayDouble));
 
-    const wrapper = testingLib.render(<Wrapper />);
-    const container = wrapper.getByTestId('container');
-    expect(container).toHaveTextContent('isLoading: true');
-    expect(container).toHaveTextContent('(data: )')
+    expect(wrapper.result.current).toMatchObject([null,{ 
+      isLoading: true,
+      error: null,
+    }]);
 
-    await testingLib.waitFor(() => {
-      expect(container).toHaveTextContent('isLoading: false');
-      expect(container).toHaveTextContent('(data: 6)')
-    });
+    await wrapper.waitForNextUpdate();
 
-    act(() => {
-      container.click();
-    })
+    expect(wrapper.result.current).toMatchObject([6, { 
+      isLoading: false,
+      error: null,
+    }]);
 
-    await testingLib.waitFor(() => {
-      expect(container).toHaveTextContent('isLoading: true');
-      expect(container).toHaveTextContent('(data: 6)')
-    });
+    count.set(1);
 
-    await testingLib.waitFor(() => {
-      expect(container).toHaveTextContent('isLoading: false');
-      expect(container).toHaveTextContent('(data: 2)')
-    });
+    await wrapper.waitForNextUpdate();
+
+    expect(wrapper.result.current).toMatchObject([6,{ 
+      isLoading: true,
+      error: null,
+    }]);
+
+    await wrapper.waitForNextUpdate();
+
+    expect(wrapper.result.current).toMatchObject([2,{ 
+      isLoading: false,
+      error: null,
+    }]);
     
   })
 })
