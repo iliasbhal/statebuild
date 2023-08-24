@@ -3,29 +3,38 @@ import { useSelector } from '../hooks';
 import { Atom, SelectorCallback, State as StateOG } from '../models';
 
 export class State extends StateOG {
-  static UI = (callback: (props: any) => any) => {    
-    return React.memo((props) => {
+  static UI = <P extends Record<string, any>>(callback: (props: P) => any) => {    
+    return React.memo((props: P) => {
       const selector = React.useMemo(() => {
-        return StateOG.select(() => {
+        return StateOG.select((...args: any[]) => {
           const reactCreateElement = React.createElement
   
           // @ts-ignore
           React.createElement = (name, props, ...children) => {
             const updatedChildren = children.map((child) => {
-              return child.jsx?.() || child;
+              return child?.jsx?.() || child;
             });
 
             return reactCreateElement(name, props, ...updatedChildren);
           }
   
-          const value = callback(props);
+
+          const reconstructedProps = {};
+          for(let i = 0; i < args.length; i += 2) {
+            reconstructedProps[args[i]] = args[i + 1];
+          }
+
+          const value = callback(reconstructedProps as P);
   
           React.createElement = reactCreateElement
           return value;
         });
       }, []);
   
-      const component = useSelector(selector);
+
+      // We have to serialize the props so that we can forward them as arguments to the selector
+      const args = Object.entries(props).flat(1);
+      const component = useSelector(selector, ...args);
       return component;
     });
   };
