@@ -49,24 +49,21 @@ export class State extends StateOG {
     return AtomUI;
   }
 
-  static from<V>(value: V) {
-    const atom = StateOG.from(value);
-
-    // This is only used to ensure intelisense doesn't complain
+  static makeRenderable<A extends Atom<any>>(atom: A) {
     const AtomUI = State.createAtomUI(atom);
     const component = React.createElement('', {}, <AtomUI />); 
     return Object.assign(atom, component, {
       jsx: () => <AtomUI />,
-    });
+    })
+  }
+
+  static from<V>(value: V) {
+    const atom = StateOG.from(value);
+    return State.makeRenderable(atom);
   }
 
   static select<V extends SelectorCallback>(value: V) {
     const atom = StateOG.select(value);
-
-    const AtomUI = State.createAtomUI(atom);
-    const component = React.createElement('', {}, <AtomUI />);
-    return Object.assign(atom, component, {
-      jsx: () => <AtomUI />,
-    });
+    return State.makeRenderable(atom);
   }
 }
