@@ -28,7 +28,7 @@ describe('useSelector', () => {
   })
 
   it('should render updated selector value', async () => {
-    jest.useFakeTimers();
+    jest.useFakeTimers({ legacyFakeTimers: true });
     const count = State.from(3);
     const doubleSelector = State.select(() => {
       return count.get() * 2;

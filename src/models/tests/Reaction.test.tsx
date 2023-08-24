@@ -1,7 +1,7 @@
 import { State, } from '../';
 
 describe('Reaction', () => {
-  jest.useFakeTimers();
+  jest.useFakeTimers({ legacyFakeTimers: true });
 
   it('it run when defined', () => {
     const atom = State.from(true);
