@@ -15,7 +15,7 @@ export class State extends StateOG {
               return child.jsx?.() || child;
             });
 
-            return reactCreateElement(name, props, updatedChildren);
+            return reactCreateElement(name, props, ...updatedChildren);
           }
   
           const value = callback(props);
