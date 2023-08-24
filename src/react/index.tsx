@@ -32,7 +32,7 @@ export class State extends StateOG {
 
   static createAtomUI = (atom: Atom<any>) => {
     const AtomUI = () => {
-      const selector = State.select(() => atom.get());
+      const selector = React.useMemo(() => State.select(() => atom.get()), []);
       const value = useSelector(selector);
       return value;
     }
