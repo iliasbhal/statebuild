@@ -2,7 +2,6 @@ import { Entity } from './base/Entity';
 import { Atom  } from './Atom';
 import { Selector, SelectorCallback } from './Selector';
 import { Reaction } from './Reaction';
-import { useSelector, useStateBuild } from '../hooks';
 
 export class State extends Entity {
   static from<V>(value: V) {
@@ -11,8 +10,7 @@ export class State extends Entity {
   }
 
   static select<Fn extends SelectorCallback>(name: string, selectorFn: Fn): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
-  // @ts-expect-error
-  static select<Fn extends SelectorCallback>(selectorFn: Fn): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
+  static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
   static select(a, b) {
     if (typeof a === 'string') {
       const selector = new Selector(b);
@@ -24,13 +22,24 @@ export class State extends Entity {
     return Selector.makeCallableSelector(selector);
   }
 
-  static selectAsync<Fn extends SelectorCallback>(selectorFnFactory: (asyncCtx: AsyncSelectorContext) => Fn) {
+  
+  static selectAsync<Fn extends SelectorCallback>(name: string, createAsyncSelector: (asyncCtx: AsyncSelectorContext) => Fn): ReturnType<typeof State.select<Fn>>;
+  static selectAsync<Fn extends SelectorCallback>(createAsyncSelector: (asyncCtx: AsyncSelectorContext) => Fn, b?: never): ReturnType<typeof State.select<Fn>>;
+  static selectAsync(a, b) {
+    if (typeof a === 'string') {
+      const asyncCtx = new AsyncSelectorContext();
+      const selectorFn = b(asyncCtx);
+      const selector = State.select(a, selectorFn);
+  
+      asyncCtx.selector = selector;
+      return selector;
+    }
+
+
     const asyncCtx = new AsyncSelectorContext();
-    const selectorFn = selectorFnFactory(asyncCtx);
+    const selectorFn = a(asyncCtx);
     const selector = State.select(selectorFn);
-
     asyncCtx.selector = selector;
-
     return selector;
   }
 

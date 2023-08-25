@@ -6,12 +6,12 @@ import { MultiWeakMap } from '../utils/MultiWeakMap';
 export type SelectorCallback = (...args: any) => any;
 export type SelectorAsyncCallback = (...args: any) => Promise<any>;
 
-export class Selector<Fn extends SelectorCallback> extends Atom<ReturnType<Fn>> {
+export class Selector<Fn extends SelectorCallback, Name extends string = string> extends Atom<ReturnType<Fn>> {
   static tree = new DependencyTree();
   static cache = new WeakMap<Selector<any>, MultiWeakMap<any, Selector<any>>>();
 
   selectorFn : Fn;
-  selectorName: string;
+  selectorName: Name;
   constructor(selector: Fn) {
     super(null);
 
