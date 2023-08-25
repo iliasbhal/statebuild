@@ -1,12 +1,16 @@
 {
-    "plugins": [
-      ["@babel/plugin-proposal-decorators", {
+  "plugins": [
+    "@babel/plugin-transform-runtime",
+    [
+      "@babel/plugin-proposal-decorators",
+      {
         "decoratorsBeforeExport": true
-      }]
-    ],
-    "presets": [
-      "@babel/preset-react",
-      "@babel/preset-env",
-      "@babel/preset-typescript",
+      }
     ]
-  }
+  ],
+  "presets": [
+    "@babel/preset-react",
+    "@babel/preset-env",
+    "@babel/preset-typescript"
+  ]
+}
