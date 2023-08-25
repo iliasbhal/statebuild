@@ -39,7 +39,17 @@ export class State extends StateOG {
     });
   };
 
-  static createAtomUI = (atom: Atom<any>) => {
+  static from<V>(value: V) {
+    const atom = StateOG.from(value);
+    return State.makeRenderable(atom);
+  }
+
+  static select<V extends SelectorCallback>(value: V) {
+    const atom = StateOG.select(value);
+    return State.makeRenderable(atom);
+  }
+
+  private static createAtomUI = (atom: Atom<any>) => {
     const AtomUI = () => {
       const selector = React.useMemo(() => State.select(() => atom.get()), []);
       const value = useSelector(selector);
@@ -49,21 +59,11 @@ export class State extends StateOG {
     return AtomUI;
   }
 
-  static makeRenderable<A extends Atom<any>>(atom: A) {
+  private static makeRenderable<A extends Atom<any>>(atom: A) {
     const AtomUI = State.createAtomUI(atom);
     const component = React.createElement('', {}, <AtomUI />); 
     return Object.assign(atom, component, {
       jsx: () => <AtomUI />,
     })
-  }
-
-  static from<V>(value: V) {
-    const atom = StateOG.from(value);
-    return State.makeRenderable(atom);
-  }
-
-  static select<V extends SelectorCallback>(value: V) {
-    const atom = StateOG.select(value);
-    return State.makeRenderable(atom);
   }
 }
