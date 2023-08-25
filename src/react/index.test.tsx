@@ -176,4 +176,31 @@ describe('React', () => {
     expect(wrapper.container).toHaveTextContent('id: 2| value:1');
     expect(renderSpy).toHaveBeenCalledTimes(1);
   })
+
+  it('should not rerender when components props didnt change', async () => {
+    jest.useFakeTimers({ legacyFakeTimers: true });
+    const atom = State.from(1);
+    const renderSpy = jest.fn();
+
+    const Item = State.UI(({ id }: { id: string }) => {
+      renderSpy();
+
+      return (
+        <span>
+          id: {id}| value:{atom}
+        </span>
+      );
+    });
+
+    const wrapper = testingLib.render(<Item id={"1"} />);
+    renderSpy.mockClear();
+
+    wrapper.rerender(<Item id={"2"} />);
+    expect(renderSpy).toHaveBeenCalledTimes(1);
+    renderSpy.mockClear();
+
+    wrapper.rerender(<Item id={"2"} />);
+
+    expect(renderSpy).not.toHaveBeenCalled();
+  })
 })
