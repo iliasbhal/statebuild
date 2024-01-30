@@ -11,7 +11,7 @@ describe('useEntity', () => {
     get readableCount() {
       return `${this.count}x times`;
     }
-  
+
     setCount(num: number) {
       this.count = num;
     }
@@ -59,11 +59,11 @@ describe('useEntity', () => {
   it('should rerender when getter is updated', () => {
     class Count extends State {
       count = 0;
-  
+
       get readableCount() {
         return `${this.count}x times`;
       }
-  
+
       increment() {
         this.count += 1;
       }
@@ -99,11 +99,11 @@ describe('useEntity', () => {
     const person = new Person('John');
     class TestState extends State {
       count = 0;
-  
+
       get text() {
         return `${person.firstName} counts to ${this.count}`;
       }
-  
+
       increment() {
         this.count += 1;
       }
@@ -136,7 +136,7 @@ describe('useEntity', () => {
   it('should batch updates and only render once', () => {
     class Count extends State {
       count = 0;
-  
+
       increment() {
         this.count += 1;
       }
@@ -276,18 +276,18 @@ describe('useEntity', () => {
 
   class Person extends State {
     firstName: string;
-  
+
     constructor(firstName: string) {
       super();
-  
+
       this.firstName = firstName;
     }
-  
+
     setFirstName(firstName: string) {
       this.firstName = firstName;
     }
   }
-  
+
   class People extends State {
     people: Person[] = [];
 
@@ -315,7 +315,7 @@ describe('useEntity', () => {
           There are {store.people.length} people.
           {store.people.length > 0 && (
             <>
-              Last Person: {store.people[store.people.length - 1].firstName}<br/>
+              Last Person: {store.people[store.people.length - 1].firstName}<br />
             </>
           )}
         </div>
@@ -334,7 +334,7 @@ describe('useEntity', () => {
       container.click();
       container.click();
     });
-  
+
     expect(renderTrack).toHaveBeenCalledTimes(1);
     expect(container).toHaveTextContent("There are 3 people.");
     expect(container).toHaveTextContent("Last Person: John 2")
@@ -372,7 +372,7 @@ describe('useEntity', () => {
     act(() => {
       container.click();
     });
-  
+
     expect(renderTrack).toHaveBeenCalledTimes(1);
     expect(container.innerHTML).toBe("Last Person: 2 (updated)");
   });
@@ -389,8 +389,8 @@ describe('useEntity', () => {
       renderTrack();
       return (
         <div
-        data-testid="container-store"
-        onClick={() => {
+          data-testid="container-store"
+          onClick={() => {
             const lastPerson = store.people[store.people.length - 1];
             lastPerson.setFirstName('2 (updated)');
           }}
@@ -409,15 +409,15 @@ describe('useEntity', () => {
     act(() => {
       container.click();
     });
-  
+
     expect(renderTrack).toHaveBeenCalledTimes(0);
     expect(people.people).toHaveLength(2);
   });
 
   it('should render/rerender when out of scope object are updated', () => {
-    
+
     const first = new Person('FirstName LastName');
-    class People extends State{
+    class People extends State {
       people = [first];
     }
 
@@ -448,7 +448,7 @@ describe('useEntity', () => {
     act(() => {
       container.click();
     });
-  
+
     expect(renderTrack).toHaveBeenCalledTimes(1);
     expect(container.innerHTML).toBe("Updated Name");
   })
@@ -457,7 +457,7 @@ describe('useEntity', () => {
     const first = new Person('First');
     const second = new Person('Second');
     const third = new Person('Third');
-    class People extends State{
+    class People extends State {
       people = [first];
     }
 
@@ -475,7 +475,6 @@ describe('useEntity', () => {
     const renderTrack = jest.fn();
     const PeopleDisplay = (props: { people: People }) => {
       const store = useEntity(props.people)
-
       renderTrack();
       return (
         <div

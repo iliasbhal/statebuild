@@ -7,8 +7,8 @@
     "outDir": "build",
     "allowJs": true,
     "module": "commonjs",
-    "target": "ESNext",
-    "lib": ["esnext", "dom"],
+    "target": "ES6",
+    "lib": ["ESNext", "dom"],
     "importHelpers": true,
     "declaration": true, // output .d.ts declaration files for consumers
     "sourceMap": true, // output .js.map sourcemap files for consumers

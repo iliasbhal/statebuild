@@ -7,7 +7,6 @@ module.exports = {
   testPathIgnorePatterns: [
     // 'build',
   ],
-  
   coveragePathIgnorePatterns: [
     '.d.ts$',
   ],
