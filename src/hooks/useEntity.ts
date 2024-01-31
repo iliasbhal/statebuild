@@ -1,6 +1,7 @@
 import React from "react";
 import { Entity } from '../models';
 import { useForceRender } from '../utils/useForceRender';
+import { makeDisposable } from "../utils/disposable";
 
 interface Type<T> extends Function { 
   new (...args: any[]): T; 
@@ -64,7 +65,6 @@ const useRegisterListener = <T extends Entity>(entity: T) => {
 
 const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
   const register = useRegisterListener(entity);
-
   const forceRender = useForceRender();
   React.useEffect(() => {
     register.dispose();
@@ -84,7 +84,5 @@ const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
     }
   });
 
-  // Make return object disposable
-  entity[Symbol.for("Symbol.dispose")] = () => register.dispose();
-  return entity as T & Disposable;
+  return makeDisposable(entity, () => register.dispose());
 }
