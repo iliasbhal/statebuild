@@ -21,7 +21,14 @@ export class DependencyTree {
     this.dependentKeysByKey.get(dependent).add(key);
   }
 
-  invalidate(key: any) {
+  autoClearCache = new AutoClearCache();
+  invalidate(key: any, force: boolean = false) {
+    if (!force && this.autoClearCache.has(key)) {
+      return;
+    }
+
+    this.autoClearCache.add(key);
+
     // remove all caches of selector that have key as dependncy;
     this.cache.delete(key);
     this.invalidations.publish(key);
@@ -32,6 +39,25 @@ export class DependencyTree {
   }
 
   verify(key: any) {
+    return this.cache.has(key);
+  }
+}
+
+class AutoClearCache {
+  cache = new Set<any>();
+  clearId: any = null;
+
+  add(key: any) {
+    this.cache.add(key)
+    if (!this.clearId) {
+      this.clearId = setTimeout(() => {
+        this.cache.clear();
+        this.clearId = null;
+      })
+    }
+  }
+
+  has(key: any) {
     return this.cache.has(key);
   }
 }
