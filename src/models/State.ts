@@ -9,12 +9,12 @@ export class State extends Entity {
     return Atom.makeCallableAtom(atom);
   }
 
-  static select<Fn extends SelectorCallback>(name: string, selectorFn: Fn): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
+  static select<Fn extends SelectorCallback>(id: string, selectorFn: Fn): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
   static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
   static select(a, b) {
     if (typeof a === 'string') {
       const selector = new Selector(b);
-      selector.selectorName = a;
+      selector.id = a;
       return Selector.makeCallableSelector(selector);
     }
 
@@ -22,12 +22,12 @@ export class State extends Entity {
     return Selector.makeCallableSelector(selector);
   }
 
-  static reaction<Fn extends SelectorCallback>(name: string, reactionCallback: () => void): Reaction;
+  static reaction<Fn extends SelectorCallback>(id: string, reactionCallback: () => void): Reaction;
   static reaction<Fn extends SelectorCallback>(reactionCallback: () => void, b?: never): Reaction;
   static reaction(a, b) {
     if (typeof a === 'string') {
       const selector = new Reaction(b);
-      selector.selectorName = a;
+      selector.id = a;
       return selector;
     }
 
