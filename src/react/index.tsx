@@ -17,38 +17,35 @@ export const enableAutoRendering = () => {
 }
 
 export class State extends StateOG {
-  static from<Fn>(selectorFn: Fn): ReturnType<typeof State.makeRenderable<ReturnType<typeof StateOG.from<Fn>>>>;
+  static from<Fn>(selectorFn: Fn): ReturnType<typeof State.makeRenderable<any, ReturnType<typeof StateOG.from<Fn>>>>;
   static from(a) {
     const atom = StateOG.from(a);
     return State.makeRenderable(atom);
   }
 
-  static select<Fn extends SelectorCallback>(name: string, selectorFn: Fn): ReturnType<typeof State.makeRenderable<ReturnType<typeof StateOG.select<Fn>>>>;
-  static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof State.makeRenderable<ReturnType<typeof StateOG.select<Fn>>>>;
+  static select<Fn extends SelectorCallback>(name: string, selectorFn: Fn): ReturnType<typeof State.makeRenderable<any, ReturnType<typeof StateOG.select<Fn>>>>;
+  static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof State.makeRenderable<any, ReturnType<typeof StateOG.select<Fn>>>>;
   static select(a, b) {
     const atom = StateOG.select(a, b);
     return State.makeRenderable(atom);
   }
 
-  static selectAsync<Fn extends SelectorCallback>(name: string, selectorFn: Fn): ReturnType<typeof State.makeRenderable<ReturnType<typeof StateOG.selectAsync<Fn>>>>;
-  static selectAsync<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof State.makeRenderable<ReturnType<typeof StateOG.selectAsync<Fn>>>>;
-  static selectAsync(a, b) {
-    const atom = StateOG.selectAsync(a, b);
-    return State.makeRenderable(atom);
-  }
-
-  public static toReactComponent = (atom: Atom<any>) => {
+  public static toReactComponent = <A extends Atom<any>>(atom: A) => {
     const StateBuildAutoUI = React.memo(() => {
-      const selector = React.useMemo(() => State.select(() => atom.get()), []);
+      const selector = React.useMemo(() => StateOG.select(() => atom.get()), []);
       const value = useSelector(selector);
-      return value;
+      return (
+        <React.Fragment>
+          {value}
+        </React.Fragment>
+      );
     });
 
     return StateBuildAutoUI;
   }
 
-  protected static makeRenderable<A extends Atom<any>>(atom: A) {
+  protected static makeRenderable<U, A extends Atom<U>>(atom: A) {
     const AtomUI = State.toReactComponent(atom);
-    return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> })
+    return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {})
   }
 }
