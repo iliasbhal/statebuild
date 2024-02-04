@@ -61,6 +61,11 @@ export class Entity {
       return false;
     }
 
+    const isPrimitive = typeof value !== 'object';
+    if (isPrimitive) {
+      return false;
+    }
+
     const isAlreadyProxy = Entity.originalObjectByProxy.has(value);
     const isObject = value instanceof Object;
     const shouldWrapWithProxy = !isAlreadyProxy && isObject;
@@ -84,15 +89,17 @@ export class Entity {
         return value
       },
       set(target, prop, newValue, receiver) {
-        Entity.changes.publish(base, prop);
-        
         const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(base, prop, newValue)
         if (shouldWrapWithProxy) {
           const proxyValue = Entity.wrap(newValue);
-          return Reflect.set(target, prop, proxyValue, receiver);
+          const returnValue = Reflect.set(target, prop, proxyValue, receiver);
+          Entity.changes.publish(base, prop);
+          return returnValue;
         }
 
-        return Reflect.set(target, prop, newValue, receiver);
+        const returnValue = Reflect.set(target, prop, newValue, receiver);
+        Entity.changes.publish(base, prop);
+        return returnValue;
       },
     })
 

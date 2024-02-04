@@ -1,7 +1,7 @@
 import { Selector, State } from '..';
 
 describe('Selector', () => {
-  it('can create a selector with other atoms', () =>{
+  it('can create a selector with other atoms', () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
@@ -15,7 +15,7 @@ describe('Selector', () => {
     expect(() => (double as any).set(3)).toThrow('Selector is read only');
   })
 
-  it('can create a selector with other updated atoms', () =>{
+  it('can create a selector with other updated atoms', () => {
     const count = State.from(3);
     count.set(4);
     const double = State.select(() => count.get() * 2);
@@ -23,7 +23,7 @@ describe('Selector', () => {
     expect(double.get()).toBe(8);
   })
 
-  it('updates selector when base atom is updated', () =>{
+  it('updates selector when base atom is updated', () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
@@ -51,7 +51,7 @@ describe('Selector', () => {
     const double = State.select(selector);
 
     expect(selector).not.toHaveBeenCalled();
-    
+
     double.get();
     double.get();
     double.get()
@@ -164,9 +164,9 @@ describe('Selector', () => {
     const double = State.select(() => count.get() * 2);
     const ten = State.select(() => double.get() * 10);
 
-    
+
     expect(ten.get()).toBe(20);
-    
+
     count.set(100)
 
     expect(ten.get()).toBe(2000);
@@ -188,14 +188,14 @@ describe('Selector', () => {
 
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(tripleSpy).not.toHaveBeenCalled();
-    
+
     triple.get();
     expect(triple.get()).toBe(6);
     expect(doubleSpy).toHaveBeenCalledTimes(1);
     expect(tripleSpy).toHaveBeenCalledTimes(1);
     doubleSpy.mockClear();
     tripleSpy.mockClear();
-    
+
     count.set(100);
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(tripleSpy).not.toHaveBeenCalled();
@@ -209,11 +209,11 @@ describe('Selector', () => {
   it('should recompute invalidated upstream selectors tree 2', () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
-    const double = State.select(() : number => {
+    const double = State.select((): number => {
       doubleSpy();
       return count.get() * 2;
     });
-    
+
     const multiple = State.from(3);
     const multiple2 = State.from(1000);
     const variableSpy = jest.fn();
@@ -230,7 +230,7 @@ describe('Selector', () => {
     variableSpy.mockClear();
 
     multiple.set(0)
-    
+
     expect(variable.get()).toBe(0);
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(variableSpy).toHaveBeenCalledTimes(1);
@@ -285,7 +285,7 @@ describe('Selector', () => {
 
     person.setName('New');
     expect(updatedNameSpy).not.toHaveBeenCalled();
-    
+
     updatedName.get()
     expect(updatedName.get()).toBe('New(Select)')
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
@@ -375,34 +375,5 @@ describe('Selector', () => {
 
     await expect(doubleAsync.get()).resolves.toBe(9);
     expect(selectorSpy).not.toHaveBeenCalled();
-  })
-
-  it('should register dependencies of async selector (when dependencies are defined after the initial sync event loop)', async () => {
-    const wait = (timeout: number) => new Promise((r) => setTimeout(r, timeout));
-
-    const selectorSpy = jest.fn();
-    const atom = State.from(3);
-    const doubleAsync = State.selectAsync(({ get }) => async () => {
-      await wait(300);
-      return get(atom) * 2
-    });
-
-    const doubleAgainAsync = State.selectAsync(({ get }) => async () => {
-      selectorSpy();
-      await wait(300);
-      return await get(doubleAsync) * 2
-    });
-
-    await expect(doubleAgainAsync.get()).resolves.toBe(12);
-    await expect(doubleAgainAsync.get()).resolves.toBe(12);
-    expect(selectorSpy).toHaveBeenCalledTimes(1);
-    selectorSpy.mockClear();
-
-    atom.set(1);
-
-    await expect(doubleAgainAsync.get()).resolves.toBe(4);
-    await expect(doubleAgainAsync.get()).resolves.toBe(4);
-    expect(selectorSpy).toHaveBeenCalledTimes(1);
-    selectorSpy.mockClear();
   })
 })

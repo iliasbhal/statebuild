@@ -8,16 +8,22 @@ export class Reaction extends Selector<ReactionCallback> {
     this.start();
   }
 
-  subscription: ReturnType<typeof Selector.subsribeToSelectorChanges>
+  subscription: ReturnType<typeof Selector.onUpstreamInvalidation>
   start() {
     this.get();
 
-    this.subscription = Selector.subsribeToSelectorChanges(this, () => {
-      setTimeout(() => this.get());
+    this.subscription = Selector.onUpstreamInvalidation(this, () => {
+      this.get();
     }); 
   }
 
+  dispose() {
+    this.stop();
+    super.dispose();
+  }
+
   stop() {
-    this.subscription?.unsubscribe()
+    this.subscription?.unsubscribe();
+    this.clear();
   }
 }

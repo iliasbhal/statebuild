@@ -37,7 +37,7 @@ describe('Reaction', () => {
     const reaction = State.reaction(reactionSpy);
     reactionSpy.mockClear();
     reaction.stop()
-    
+
     atom.set(false);
     jest.runOnlyPendingTimers();
     expect(reactionSpy).not.toHaveBeenCalled();
@@ -49,31 +49,32 @@ describe('Reaction', () => {
     reaction.stop()
   })
 
-  it('can restart triggering reaction', () => {
+  it('can restart triggering reaction', async () => {
     const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
     })
 
-    const reaction = State.reaction(reactionSpy);
+    const reaction = State.reaction('testing', reactionSpy);
+    expect(reactionSpy).toHaveBeenCalledTimes(1);
+
     reactionSpy.mockClear();
     reaction.stop();
-    
+
     atom.set(false);
-    jest.runOnlyPendingTimers();
     expect(reactionSpy).not.toHaveBeenCalled();
 
     atom.set(true);
-    jest.runOnlyPendingTimers();
     expect(reactionSpy).not.toHaveBeenCalled();
 
+    reactionSpy.mockClear();
     reaction.start();
-    jest.runOnlyPendingTimers();
     expect(reactionSpy).toHaveBeenCalledTimes(1);
     reactionSpy.mockClear();
 
     atom.set(false);
-    jest.runOnlyPendingTimers();
+
     expect(reactionSpy).toHaveBeenCalledTimes(1);
+    return;
   })
 })

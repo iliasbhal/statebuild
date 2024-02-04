@@ -9,17 +9,18 @@ export type SelectorAsyncCallback = (...args: any) => Promise<any>;
 export class Selector<Fn extends SelectorCallback, Name extends string = string> extends Atom<ReturnType<Fn>> {
   static tree = new DependencyTree();
   static cache = new WeakMap<Selector<any>, MultiWeakMap<any, Selector<any>>>();
+  static disposableRessources = new WeakMap<Selector<any>, {dispose: Function}[]>();
 
   selectorFn : Fn;
   selectorName: Name;
-  constructor(selector: Fn) {
+  constructor(selectorFn: Fn) {
     super(null);
 
     const cache = new MultiWeakMap<any, Selector<Fn>>();
     Selector.cache.set(this, cache);
     cache.mset([], this);
 
-    this.selectorFn = selector;
+    this.selectorFn = selectorFn;
   }
 
   static makeCallableSelector<A extends Selector<any>>(selector: A) : A['selectorFn'] & A {
@@ -35,37 +36,72 @@ export class Selector<Fn extends SelectorCallback, Name extends string = string>
     return callableAtom;
   }
 
-  static subsribeToSelectorChanges(selector: Selector<any>, callback: () => void) {
+  static onUpstreamInvalidation(selector: Selector<any>, callback: () => void) {
     const dependencyKey = Entity.getBaseObject(selector);
-    const subscription = Selector.tree.invalidations.subscribe(dependencyKey, () => callback())
+    const subscription = Selector.tree.invalidations.subscribe(dependencyKey, callback)
 
     return subscription;
   }
 
-  static autoRegisterSelectorDependencies(selector: Selector<any>) {
-    const dependencyKey = Entity.getBaseObject(selector);
-    const registration = Entity.regsiterGlobalListener(dependencyKey, (parent, prop) => {
-      selector.addDependency(parent);
-      // Ensure that get notify when one a dependency is updated
-      // In that case we'll need to invalidate this and downstream selectors
-      Entity.subscribe(parent, (updatedProp) => {
-        if (updatedProp !== prop) return;
-        selector.invalidate();
-      });
-    })
+  static disposeRelatedRessources(selector: Selector<any>) {
+    const core = Entity.getBaseObject(selector);
+    const disposableRessources = Selector.disposableRessources.get(core);
+    if (disposableRessources) {
+      disposableRessources.forEach((ressource) => ressource.dispose());
+    }
 
-    return registration;
+    Selector.disposableRessources.delete(core)
   }
 
-  // static autoRegisterAsyncSelectorDependencies<P extends Promise<any>, T extends Selector<(...args : any[]) => P>>(selector:  T, promise: P) {
-  //   const registration = Selector.autoRegisterSelectorDependencies(selector);
-    
-  //   TrackedPromise.open(selector);
-  //   return promise.finally(() => {
-  //     TrackedPromise.close(selector);
-  //     registration.unregister();
-  //   });
-  // }
+  static getOrCreateDisposableRessources(selector: Selector<any>) {
+    const core = Entity.getBaseObject(selector);
+
+    const disposableRessources = Selector.disposableRessources.get(core);
+    if (disposableRessources) {
+      return disposableRessources;
+    }
+
+    const ressources = [];
+    Selector.disposableRessources.set(core, ressources);
+    return ressources;
+  }
+
+  static autoRegisterSelectorDependencies(selector: Selector<any>) {
+    const core = Entity.getBaseObject(selector);
+    const random = Math.random();
+
+    Selector.disposeRelatedRessources(selector);
+    const ressources = Selector.getOrCreateDisposableRessources(selector);
+
+    const registration = Entity.regsiterGlobalListener(core, (parent, prop) => {
+      const isSelector = parent === selector;
+      if (isSelector) return;
+      // Ensure that get notify when one a dependency is updated
+      // In that case we'll need to invalidate this and downstream selectors
+
+      let previousValue = parent[prop];
+      const propSub = Entity.subscribe(parent, (updatedProp) => {
+        const isTrackedProp = updatedProp === prop;
+        if (!isTrackedProp) return;
+
+        const nextValue = parent[updatedProp];
+        const hasChanged = previousValue !== nextValue;
+        if (hasChanged) {
+          core.invalidate(hasChanged);
+          previousValue = nextValue;
+        }
+      });
+
+      ressources.push({ dispose: () => propSub.unsubscribe() });
+      core.addDependency(parent);
+    })
+
+    return {
+      unregister: () => {
+        registration.unregister();
+      }
+    };
+  }
 
   addDependency(dependency: object) {
     const dependencyKey = Entity.getBaseObject(this);
@@ -73,9 +109,9 @@ export class Selector<Fn extends SelectorCallback, Name extends string = string>
     return Selector.tree.register(dependencyKey, dependentKey);
   }
 
-  private invalidate() {
+  private invalidate(force?: boolean) {
     const dependencyKey = Entity.getBaseObject(this);
-    return Selector.tree.invalidate(dependencyKey);
+    return Selector.tree.invalidate(dependencyKey, force);
   }
 
   clear() {
@@ -91,12 +127,11 @@ export class Selector<Fn extends SelectorCallback, Name extends string = string>
     const selectedValue = selector.selectorFn(...args);
     registration.unregister();
 
-    // const isPromise = selectedValue instanceof Promise;
-    // if(isPromise) {
-    //   Selector.autoRegisterAsyncSelectorDependencies(selector, selectedValue);
-    // }
-
     return selectedValue;
+  }
+
+  dispose() {
+    return Selector.disposeRelatedRessources(this);
   }
 
   select(...args: unknown[]) {
@@ -121,48 +156,13 @@ export class Selector<Fn extends SelectorCallback, Name extends string = string>
       return cache.mget(...args)
     }
 
-    const next = new Selector(this.selectorFn);
-    cache.mset(args, next);
-    return next;
+    const clonedSelector = Object.create(this, Object.getOwnPropertyDescriptors(this));
+    cache.mset(args, clonedSelector);
+    return clonedSelector;
   }
 
   get = (...args) => {
     const cache = this.getSelectorForArgs(...args);
     return cache.select(...args);
-  }
-}
-
-// Zone 1 |--------*--------*-------*----------|
-// Zone 2                |------*---------*---------------*---|
-// Zone 2      *      *                *              *         
-
-class TrackedPromise extends Promise<any> {
-  static zones = new Set<Selector<any>>();
-
-  static open(selector: Selector<any>) {
-    this.zones.add(selector);
-
-    console.log("ADDED", this.zones);
-  }
-
-  static close(selector: Selector<any>) {
-    this.zones.delete(selector);
-
-    console.log("DELETED",this.zones);
-  }
-
-  static get [Symbol.species]() {
-    return Promise;
-  }
-
-  constructor(executor) {
-    // console.log('NEW PROMISE', executor.toString());
-    // try {
-    //   throw new Error('FIND STASKTRACE');
-    // } catch (err) {
-    //   console.log('ERR', err);
-    // }
-
-    super(executor);
   }
 }

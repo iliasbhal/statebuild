@@ -3,26 +3,16 @@ import { Selector, SelectorCallback } from '../models';
 
 export const useSelector = <Fn extends SelectorCallback>(selector: Selector<Fn>, ...args: unknown[]) : ReturnType<Fn> => {
   const [value, setValue] = React.useState(() => selector.get(...args));
-  const renderCount = React.useRef(0);
 
-  React.useEffect(() => {
-    const isFirstRender = renderCount.current === 0;
-    if (!isFirstRender) {
+  React.useEffect(() => {    
+    const subscription = Selector.onUpstreamInvalidation(selector, () => {
       const nextValue = selector.get(...args);
-      setValue(nextValue);
-    } else {
-      renderCount.current += 1;
-    }
-
-    const subscription = Selector.subsribeToSelectorChanges(selector, () => {
-      setTimeout(() => {
-        const nextValue = selector.get(...args);
-        setValue(nextValue)
-      });
+      setValue(nextValue)
     });
 
     return () => {
-      subscription.unsubscribe()
+      subscription.unsubscribe();
+      selector.dispose();
     }
   }, [...args]);
 

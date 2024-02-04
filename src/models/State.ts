@@ -22,39 +22,17 @@ export class State extends Entity {
     return Selector.makeCallableSelector(selector);
   }
 
-  
-  static selectAsync<Fn extends SelectorCallback>(name: string, createAsyncSelector: (asyncCtx: AsyncSelectorContext) => Fn): ReturnType<typeof State.select<Fn>>;
-  static selectAsync<Fn extends SelectorCallback>(createAsyncSelector: (asyncCtx: AsyncSelectorContext) => Fn, b?: never): ReturnType<typeof State.select<Fn>>;
-  static selectAsync(a, b) {
+  static reaction<Fn extends SelectorCallback>(name: string, reactionCallback: () => void): Reaction;
+  static reaction<Fn extends SelectorCallback>(reactionCallback: () => void, b?: never): Reaction;
+  static reaction(a, b) {
     if (typeof a === 'string') {
-      const asyncCtx = new AsyncSelectorContext();
-      const selectorFn = b(asyncCtx);
-      const selector = State.select(a, selectorFn);
-  
-      asyncCtx.selector = selector;
+      const selector = new Reaction(b);
+      selector.selectorName = a;
       return selector;
     }
 
+    const selector = new Reaction(a);
 
-    const asyncCtx = new AsyncSelectorContext();
-    const selectorFn = a(asyncCtx);
-    const selector = State.select(selectorFn);
-    asyncCtx.selector = selector;
     return selector;
-  }
-
-  static reaction(selectorFn: () => any) {
-    return new Reaction(selectorFn);
-  }
-}
-
-class AsyncSelectorContext {
-  selector: Selector<any>;
-
-  get = <A extends Atom<any>>(atom: A) : A['value'] => {
-    const registration = Selector.autoRegisterSelectorDependencies(this.selector);
-    const value = atom.get();
-    registration.unregister();
-    return value;
   }
 }
