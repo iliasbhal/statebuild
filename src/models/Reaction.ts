@@ -24,6 +24,5 @@ export class Reaction extends Selector<ReactionCallback> {
 
   stop() {
     this.subscription?.unsubscribe();
-    this.clear();
   }
 }

@@ -1,29 +1,29 @@
-import { Selector, State } from '..';
+import { Selector, State } from "..";
 
-describe('Selector', () => {
-  it('can create a selector with other atoms', () => {
+describe("Selector", () => {
+  it("can create a selector with other atoms", () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
     expect(double.get()).toBe(6);
-  })
+  });
 
-  it('throws if trying to manualy set set value', () => {
+  it("throws if trying to manualy set set value", () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
-    expect(() => (double as any).set(3)).toThrow('Selector is read only');
-  })
+    expect(() => (double as any).set(3)).toThrow("Selector is read only");
+  });
 
-  it('can create a selector with other updated atoms', () => {
+  it("can create a selector with other updated atoms", () => {
     const count = State.from(3);
     count.set(4);
     const double = State.select(() => count.get() * 2);
 
     expect(double.get()).toBe(8);
-  })
+  });
 
-  it('updates selector when base atom is updated', () => {
+  it("updates selector when base atom is updated", () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
@@ -32,9 +32,9 @@ describe('Selector', () => {
 
     count.set(1);
     expect(double.get()).toBe(2);
-  })
+  });
 
-  it('computes selector only when read', () => {
+  it("computes selector only when read", () => {
     const count = State.from(3);
     const selector = jest.fn().mockImplementation(() => count.get() * 2);
     const double = State.select(selector);
@@ -43,9 +43,9 @@ describe('Selector', () => {
     count.set(6);
     expect(double.get()).toBe(12);
     expect(selector).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('doesn\'t recompute selector if atom hasn\'t changed', () => {
+  it("doesn't recompute selector if atom hasn't changed", () => {
     const count = State.from(3);
     const selector = jest.fn().mockImplementation(() => count.get() * 2);
     const double = State.select(selector);
@@ -54,7 +54,7 @@ describe('Selector', () => {
 
     double.get();
     double.get();
-    double.get()
+    double.get();
 
     expect(double.get()).toBe(6);
     expect(selector).toHaveBeenCalledTimes(1);
@@ -70,74 +70,28 @@ describe('Selector', () => {
 
     expect(double.get()).toBe(8);
     expect(selector).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('can be used like a normal function', () => {
+  it("can be used like a normal function", () => {
     const count = State.from(3);
     const doubleSelector = jest.fn();
     const double = State.select(() => {
       doubleSelector();
-      return count.get() * 2
+      return count.get() * 2;
     });
 
     const tenSelector = jest.fn();
     const ten = State.select(() => {
       tenSelector();
-      return double.get() * 10
-    })
+      return double.get() * 10;
+    });
 
     expect(ten()).toBe(60);
     expect(tenSelector).toHaveBeenCalledTimes(1);
     expect(doubleSelector).toHaveBeenCalledTimes(1);
-  })
-
-  it('memoize results when used as a function with arguments', () => {
-    const count = State.from(3);
-    const doubleSelector = jest.fn();
-    const doubleWith = State.select((num: number) => {
-      doubleSelector(num);
-      return count.get() * num;
-    });
-
-    expect(doubleWith(0)).toBe(0);
-    expect(doubleWith(0)).toBe(0);
-    expect(doubleSelector).toHaveBeenCalledTimes(1);
-    expect(doubleSelector).toHaveBeenCalledWith(0);
-    doubleSelector.mockClear();
-
-    expect(doubleWith(2)).toBe(6);
-    expect(doubleWith(2)).toBe(6);
-    expect(doubleSelector).toHaveBeenCalledTimes(1);
-    expect(doubleSelector).toHaveBeenCalledWith(2);
   });
 
-  it('invalidates memoized results when dependency changes', () => {
-    const count = State.from(3);
-    const doubleSelector = jest.fn();
-    const doubleWith = State.select((num: number) => {
-      doubleSelector(num);
-      return count.get() * num;
-    });
-
-    doubleWith(0);
-    doubleWith(2);
-    doubleSelector.mockClear();
-
-    count.set(1);
-
-    expect(doubleWith(0)).toBe(0);
-    expect(doubleWith(0)).toBe(0);
-    expect(doubleSelector).toHaveBeenCalledTimes(1);
-    expect(doubleSelector).toHaveBeenCalledWith(0);
-    doubleSelector.mockClear();
-
-    expect(doubleWith(2)).toBe(2);
-    expect(doubleWith(2)).toBe(2);
-    expect(doubleSelector).toHaveBeenCalledTimes(1);
-    expect(doubleSelector).toHaveBeenCalledWith(2);
-  })
-
-  it('accepts a selectors as arguments', () => {
+  it("accepts a selectors as arguments", () => {
     const count = State.from(3);
     const selector = jest.fn();
     const double = State.select(() => {
@@ -157,22 +111,21 @@ describe('Selector', () => {
     expect(quad.get()).toBe(12);
     expect(selector).toHaveBeenCalledTimes(1);
     expect(selector2).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('be up to date when upstream selector isn\'t valid', () => {
+  it("be up to date when upstream selector isn't valid", () => {
     const count = State.from(1);
     const double = State.select(() => count.get() * 2);
     const ten = State.select(() => double.get() * 10);
 
-
     expect(ten.get()).toBe(20);
 
-    count.set(100)
+    count.set(100);
 
     expect(ten.get()).toBe(2000);
-  })
+  });
 
-  it('should recompute invalidated upstream selectors', () => {
+  it("should recompute invalidated upstream selectors", () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
     const double = State.select(() => {
@@ -200,13 +153,13 @@ describe('Selector', () => {
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(tripleSpy).not.toHaveBeenCalled();
 
-    triple.get()
+    triple.get();
     expect(triple.get()).toBe(600);
     expect(doubleSpy).toHaveBeenCalledTimes(1);
     expect(tripleSpy).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('should recompute invalidated upstream selectors tree 2', () => {
+  it("should recompute invalidated upstream selectors tree 2", () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
     const double = State.select((): number => {
@@ -222,14 +175,14 @@ describe('Selector', () => {
       return double.get() * multiple.get() * multiple2.get();
     });
 
-    variable.get()
+    variable.get();
     expect(variable.get()).toBe(6000);
     expect(doubleSpy).toHaveBeenCalledTimes(1);
     expect(variableSpy).toHaveBeenCalledTimes(1);
     doubleSpy.mockClear();
     variableSpy.mockClear();
 
-    multiple.set(0)
+    multiple.set(0);
 
     expect(variable.get()).toBe(0);
     expect(doubleSpy).not.toHaveBeenCalled();
@@ -237,13 +190,13 @@ describe('Selector', () => {
     doubleSpy.mockClear();
     variableSpy.mockClear();
 
-    multiple2.set(5)
+    multiple2.set(5);
     expect(variable.get()).toBe(0);
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(variableSpy).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('should accept entities as selector arguments', () => {
+  it("should accept entities as selector arguments", () => {
     class Person extends State {
       name: string;
       lastName: string;
@@ -251,7 +204,7 @@ describe('Selector', () => {
       constructor(name: string) {
         super();
         this.setName(name);
-        this.setLastName('last')
+        this.setLastName("last");
       }
 
       setName(name: string) {
@@ -263,48 +216,47 @@ describe('Selector', () => {
       }
     }
 
-    const person = new Person('First');
-    const second = new Person('Second');
+    const person = new Person("First");
+    const second = new Person("Second");
     const updatedNameSpy = jest.fn();
     const updatedName = State.select(() => {
       updatedNameSpy();
-      return person.name + '(Select)';
+      return person.name + "(Select)";
     });
 
     const marriedWithSpy = jest.fn();
     const marriedWith = State.select(() => {
       marriedWithSpy();
-      return updatedName.get() + ' is with ' + second.name;
-    })
+      return updatedName.get() + " is with " + second.name;
+    });
 
-    updatedName.get()
-    expect(updatedName.get()).toBe('First(Select)')
+    updatedName.get();
+    expect(updatedName.get()).toBe("First(Select)");
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
     expect(marriedWithSpy).not.toHaveBeenCalled();
     updatedNameSpy.mockClear();
 
-    person.setName('New');
+    person.setName("New");
     expect(updatedNameSpy).not.toHaveBeenCalled();
 
-    updatedName.get()
-    expect(updatedName.get()).toBe('New(Select)')
+    updatedName.get();
+    expect(updatedName.get()).toBe("New(Select)");
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
     updatedNameSpy.mockClear();
 
     marriedWith.get();
-    expect(marriedWith.get()).toBe('New(Select) is with Second');
+    expect(marriedWith.get()).toBe("New(Select) is with Second");
     expect(marriedWithSpy).toHaveBeenCalledTimes(1);
     marriedWithSpy.mockClear();
 
-
-    person.setName('John');
+    person.setName("John");
     marriedWith.get();
-    expect(marriedWith.get()).toBe('John(Select) is with Second');
+    expect(marriedWith.get()).toBe("John(Select) is with Second");
     expect(marriedWithSpy).toHaveBeenCalledTimes(1);
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
-  })
+  });
 
-  it('should not invalidate selector if property isnt used in selector', () => {
+  it("should not invalidate selector if property isnt used in selector", () => {
     class Person extends State {
       name: string;
       lastName: string;
@@ -312,7 +264,7 @@ describe('Selector', () => {
       constructor(name: string) {
         super();
         this.setName(name);
-        this.setLastName('last')
+        this.setLastName("last");
       }
 
       setName(name: string) {
@@ -324,40 +276,38 @@ describe('Selector', () => {
       }
     }
 
-    const person = new Person('First');
+    const person = new Person("First");
     const updatedNameSpy = jest.fn();
     const updatedName = State.select(() => {
       updatedNameSpy();
-      return person.name + '(Select)';
+      return person.name + "(Select)";
     });
 
-
     updatedName.get();
-    expect(updatedName.get()).toBe('First(Select)');
+    expect(updatedName.get()).toBe("First(Select)");
     expect(updatedNameSpy).toHaveBeenCalledTimes(1);
     updatedNameSpy.mockClear();
 
-    person.setLastName('Doe');
+    person.setLastName("Doe");
     updatedName.get();
-    expect(updatedName.get()).toBe('First(Select)');
+    expect(updatedName.get()).toBe("First(Select)");
     expect(updatedNameSpy).not.toHaveBeenCalled();
-  })
+  });
 
-  it('should register dependencies of async selector (when dependencies are defined in the same sync event loop)', async () => {
-    const wait = (timeout: number) => new Promise((r) => setTimeout(r, timeout));
+  it("should register dependencies of async selector (when dependencies are defined in the same sync event loop)", async () => {
+    const wait = (timeout: number) =>
+      new Promise((r) => setTimeout(r, timeout));
     const atom = State.from(3);
     const atom2 = State.from(2);
     const selectorSpy = jest.fn();
-    const doubleAsync = State.select(
-      async () => {
-        selectorSpy();
-        const value = atom.get();
-        const multiplyWith = atom2.get();
-        await wait(200);
+    const doubleAsync = State.select(async () => {
+      selectorSpy();
+      const value = atom.get();
+      const multiplyWith = atom2.get();
+      await wait(200);
 
-        return value * multiplyWith;
-      }
-    );
+      return value * multiplyWith;
+    });
 
     await expect(doubleAsync.get()).resolves.toBe(6);
     await expect(doubleAsync.get()).resolves.toBe(6);
@@ -375,5 +325,5 @@ describe('Selector', () => {
 
     await expect(doubleAsync.get()).resolves.toBe(9);
     expect(selectorSpy).not.toHaveBeenCalled();
-  })
-})
+  });
+});

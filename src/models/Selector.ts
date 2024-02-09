@@ -1,25 +1,19 @@
 import { Atom } from "./Atom";
 import { Entity } from './base/Entity';
 import { DependencyTree } from '../utils/DependencyTree';
-import { MultiWeakMap } from '../utils/MultiWeakMap';
 
 export type SelectorCallback = (...args: any) => any;
 export type SelectorAsyncCallback = (...args: any) => Promise<any>;
 
 export class Selector<Fn extends SelectorCallback, ID extends string = string> extends Atom<ReturnType<Fn>> {
   static tree = new DependencyTree();
-  static cache = new WeakMap<Selector<any>, MultiWeakMap<any, Selector<any>>>();
   static disposableRessources = new WeakMap<Selector<any>, {dispose: Function}[]>();
 
   selectorFn : Fn;
+  context = new SelectorContext(this);
   id: ID;
   constructor(selectorFn: Fn) {
     super(null);
-
-    const cache = new MultiWeakMap<any, Selector<Fn>>();
-    Selector.cache.set(this, cache);
-    cache.mset([], this);
-
     this.selectorFn = selectorFn;
   }
 
@@ -68,8 +62,6 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
 
   static autoRegisterSelectorDependencies(selector: Selector<any>) {
     const core = Entity.getBaseObject(selector);
-    const random = Math.random();
-
     Selector.disposeRelatedRessources(selector);
     const ressources = Selector.getOrCreateDisposableRessources(selector);
 
@@ -114,17 +106,11 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     return Selector.tree.invalidate(dependencyKey, force);
   }
 
-  clear() {
-    const cache = Selector.cache.get(this);
-    cache.clear();
-  }
-
-  static runSelectorFn(selector: Selector<any>, args: any[]) {
+  static runSelectorFn(selector: Selector<any>) {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
     const registration = Selector.autoRegisterSelectorDependencies(selector)
-
-    const selectedValue = selector.selectorFn(...args);
+    const selectedValue = selector.selectorFn(selector.context);
     registration.unregister();
 
     return selectedValue;
@@ -135,10 +121,15 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   }
 
   select(...args: unknown[]) {
-    const dependencyKey = Entity.getBaseObject(this);
-    const hasCachedValue = Selector.tree.verify(dependencyKey);
+    const calledWithArguments = args.length > 0;
+    if (calledWithArguments) {
+      throw new Error('Selector does not accept arguments');
+    }
+
+    const core = Entity.getBaseObject(this);
+    const hasCachedValue = Selector.tree.has(core);
     if (!hasCachedValue) {
-      const selectedValue = Selector.runSelectorFn(this, args)
+      const selectedValue = Selector.runSelectorFn(this)
       super.set(selectedValue);
     }
 
@@ -149,20 +140,28 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     throw new Error('Selector is read only, cannot use .set() method');
   }
 
-  getSelectorForArgs(...args) : Selector<Fn> {
-    const cache = Selector.cache.get(this);
-    const cachedSelector = cache.mhas(...args);
-    if (cachedSelector) {
-      return cache.mget(...args)
-    }
+  get = (...args) => {
+    return this.select(...args);
+  }
+}
 
-    const clonedSelector = Object.create(this, Object.getOwnPropertyDescriptors(this));
-    cache.mset(args, clonedSelector);
-    return clonedSelector;
+
+class SelectorContext {
+  selector: Selector<any>;
+
+  constructor(selector: Selector<any> = null) {
+    this.selector = selector;
   }
 
-  get = (...args) => {
-    const cache = this.getSelectorForArgs(...args);
-    return cache.select(...args);
+  get = <A extends Atom<any>>(atom: A) : A['value'] => {
+    const isTrackable = atom instanceof Selector;
+    if(!isTrackable) {
+      return atom;
+    }
+
+    const registration = Selector.autoRegisterSelectorDependencies(this.selector);
+    const value = atom.get();
+    registration.unregister();
+    return value;
   }
 }

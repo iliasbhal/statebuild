@@ -5,41 +5,41 @@ export class DependencyTree {
   dependentKeysByKey = new Map<object, Set<object>>();
   invalidations = new EventBus<object>(); 
 
-  register(key: any, dependent: any) {
-    const isDifferent = dependent !== key; 
+  register(origin: any, dependent: any) {
+    const isDifferent = dependent !== origin; 
     if (!isDifferent) {
       // Cannot be dependent on themselves
       return;
     }
 
-    this.cache.add(key);
+    this.cache.add(origin);
 
     if (!this.dependentKeysByKey.has(dependent)) {
       this.dependentKeysByKey.set(dependent, new Set());
     }
 
-    this.dependentKeysByKey.get(dependent).add(key);
+    this.dependentKeysByKey.get(dependent).add(origin);
   }
 
   autoClearCache = new AutoClearCache();
-  invalidate(key: any, force: boolean = false) {
-    if (!force && this.autoClearCache.has(key)) {
+  invalidate(origin: any, force: boolean = false) {
+    if (!force && this.autoClearCache.has(origin)) {
       return;
     }
 
-    this.autoClearCache.add(key);
+    this.autoClearCache.add(origin);
 
     // remove all caches of selector that have key as dependncy;
-    this.cache.delete(key);
-    this.invalidations.publish(key);
+    this.cache.delete(origin);
+    this.invalidations.publish(origin);
 
-    this.dependentKeysByKey.get(key)?.forEach(dependentKey => {
+    this.dependentKeysByKey.get(origin)?.forEach(dependentKey => {
       this.invalidate(dependentKey);
     });
   }
 
-  verify(key: any) {
-    return this.cache.has(key);
+  has(origin: any) {
+    return this.cache.has(origin);
   }
 }
 

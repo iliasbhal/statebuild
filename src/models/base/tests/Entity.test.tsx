@@ -1,4 +1,4 @@
-import { State, Entity } from '..';
+import { State, Entity } from '../..';
 
 describe('Entity', () => {
   class Person extends State {

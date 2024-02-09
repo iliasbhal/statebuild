@@ -1,8 +1,8 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { act } from 'react-dom/test-utils';
-import { State, enableAutoRendering } from './index'
-import { useAtom } from '../hooks';
+import { State, enableAutoRendering } from '../index'
+import { useAtom } from '../../hooks';
 
 describe('React', () => {
   enableAutoRendering();
