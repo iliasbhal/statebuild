@@ -1,5 +1,5 @@
 import { Entity } from './base/Entity';
-import { Atom  } from './Atom';
+import { Atom } from './Atom';
 import { Selector, SelectorCallback } from './Selector';
 import { Reaction } from './Reaction';
 
@@ -26,13 +26,14 @@ export class State extends Entity {
   static reaction<Fn extends SelectorCallback>(reactionCallback: () => void, b?: never): Reaction;
   static reaction(a, b) {
     if (typeof a === 'string') {
-      const selector = new Reaction(b);
-      selector.id = a;
-      return selector;
+      const reaction = new Reaction(b);
+      reaction.id = a;
+      reaction.start();
+      return reaction;
     }
 
-    const selector = new Reaction(a);
-
-    return selector;
+    const reaction = new Reaction(a);
+    reaction.start();
+    return reaction;
   }
 }

@@ -5,7 +5,7 @@ module.exports = {
   },
   setupFilesAfterEnv: ['./jest.setup.js'],
   testPathIgnorePatterns: [
-    'build',
+    './build',
   ],
   coveragePathIgnorePatterns: [
     '.d.ts$',
