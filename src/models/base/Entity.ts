@@ -131,7 +131,7 @@ const pathMapSetMethod = (base: Set<any> | Map<any, any>, prop, method) => {
     };
   }
 
-  if (prop === 'set') {
+  if (prop === 'set' && base instanceof Map) {
     return function (...args) {
       const willChange = args[1] !== base.get(args[0]);
 
