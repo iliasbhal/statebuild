@@ -86,3 +86,125 @@ describe('Entity', () => {
     });
   })
 })
+
+describe.only('Entity Map/Set', () => {
+
+  
+  it('Set: can track when adding/removing an element', () => {
+    class Example extends State {
+      list: Set<any>[] = [];
+    }
+    const example = new Example();
+    example.list.push(new Set());
+
+    
+    const callback = jest.fn();
+    Entity.subscribe(example.list[0], callback);
+
+    example.list[0].add('1');
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('1');
+    callback.mockClear();
+
+    example.list[0].add('1');
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].add('2');
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('2');
+    callback.mockClear();
+
+    example.list[0].add('1');
+    example.list[0].add('2');
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+
+    const obj = { id: 1 };
+    example.list[0].add(obj);
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith(obj);
+    callback.mockClear();
+
+    example.list[0].add('1');
+    example.list[0].add('2');
+    example.list[0].add(obj);
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].delete('1');
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('1');
+    callback.mockClear();
+
+    example.list[0].delete('1');
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].delete(obj);
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith(obj);
+    callback.mockClear();
+
+
+    example.list[0].delete('1');
+    example.list[0].delete(obj);
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].clear();
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('2');
+  })
+
+  it('Map: can track when adding/removing an element', () => {
+    class Example extends State {
+      list: Map<any, any>[] = [];
+    }
+
+    const example = new Example();
+    example.list.push(new Map());
+
+    const callback = jest.fn();
+    Entity.subscribe(example.list[0], callback);
+
+    example.list[0].set('1', true);
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('1');
+    callback.mockClear();
+
+    example.list[0].set('1', true);
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].set('1', false);
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith('1');
+    callback.mockClear();
+
+    const obj = { id: 1 };
+    example.list[0].set(obj, true);
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith(obj);
+    callback.mockClear();
+
+    example.list[0].set(obj, true);
+    expect(callback).not.toHaveBeenCalled();
+    callback.mockClear();
+
+    example.list[0].delete('1');
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith('size');
+    expect(callback).toHaveBeenCalledWith('1');
+    callback.mockClear();
+  })
+})

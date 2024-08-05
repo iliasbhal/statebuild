@@ -3,7 +3,7 @@ import { EventBus } from "../../utils/EventBus";
 type PropVisitor = (target: object, prop: string | symbol) => void;
 
 export class Entity {
-  private static changes = new EventBus<Entity>();
+  static changes = new EventBus<Entity>();
   static subscribe(obj: object, callback: any) {
     const orignal = Entity.getBaseObject(obj);
     return Entity.changes.subscribe(orignal, callback);
@@ -69,7 +69,12 @@ export class Entity {
           }
         }
 
-        // console.log('VSITE 2',  base, prop);
+        if (base instanceof Set || base instanceof Map) {
+          if (typeof value === 'function') {
+            return pathMapSetMethod(base, prop, value);
+          }
+        }
+
         return value;
       },
       set(target, prop, newValue, receiver) {
@@ -98,4 +103,63 @@ export class Entity {
   constructor() {
     return Entity.wrap(this);
   }
+}
+
+
+const pathMapSetMethod = (base: Set<any> | Map<any, any>, prop, method) => {
+
+  // Methods that can update the content of the Set/Map
+  if (prop === 'add' || prop === 'delete' || prop === 'clear') {
+    return function (...args) {
+      const iterable = base.keys();
+      const keysToNotify = prop === 'clear' ? Array.from(iterable)
+        : prop === 'set' ? [args[0]]
+          : args;
+
+      const beforeSize = base.size;
+      const returnValue = Reflect.apply(method, base, args);
+      const afterSize = base.size;
+
+      if (beforeSize !== afterSize) {
+        Entity.changes.publish(base, 'size');
+        keysToNotify.forEach((key) => {
+          Entity.changes.publish(base, key);
+        })
+      }
+
+      return returnValue;
+    };
+  }
+
+  if (prop === 'set') {
+    return function (...args) {
+      const willChange = args[1] !== base.get(args[0]);
+
+      const beforeSize = base.size;
+      const returnValue = Reflect.apply(method, base, args);
+      const afterSize = base.size;
+
+      if (beforeSize !== afterSize) {
+        Entity.changes.publish(base, 'size');
+        Entity.changes.publish(base, args[0]);
+      } else if (willChange) {
+        Entity.changes.publish(base, args[0]);
+      }
+
+      return returnValue;
+    };
+  }
+
+  // Methods that read the content
+  if (prop === 'has' || prop === 'get') {
+    const visit = Entity.getPeekVisitor();
+    if (visit) {
+      return function (...args) {
+        visit(base, args[0]);
+        return Reflect.apply(method, base, args);
+      };
+    }
+  }
+
+  return method.bind(base);
 }
