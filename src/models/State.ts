@@ -37,7 +37,7 @@ export class State extends Entity {
     return reaction;
   }
 
-  static waitFor<Result, Error = any>(matchCallback: (resolve: (v: Result) => void, reject: (err: Error) => void) => Result): Promise<Result> {
+  static waitFor<Result, Error = any>(matchCallback: (resolve: (v: Result) => void, reject: (err: Error) => void) => void): Promise<Result> {
     return new Promise((resolve, reject) => {
       const reaction = State.reaction(() => {
         const synthetic = {
