@@ -1,5 +1,5 @@
 import React from 'react';
-import { Reaction } from '../models/Reaction';
+import { Reaction } from '../../models/Reaction';
 
 export function useReaction<R extends () => void>(reaction: R) {
   React.useEffect(() => {

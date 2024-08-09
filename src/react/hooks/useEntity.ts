@@ -1,29 +1,29 @@
 import React from "react";
-import { Entity } from '../models';
-import { useForceRender } from '../utils/useForceRender';
-import { makeDisposable } from "../utils/disposable";
+import { Entity } from '../../models';
+import { useForceRender } from '../../utils/useForceRender';
+import { makeDisposable } from "../../utils/disposable";
 
-interface Type<T> extends Function { 
-  new (...args: any[]): T; 
+interface Type<T> extends Function {
+  new(...args: any[]): T;
 }
 
-export const useEntity = <T extends Entity>(entity: Type<T> | T) : T & Disposable => {
+export const useEntity = <T extends Entity>(entity: Type<T> | T): T & Disposable => {
   const [instance] = React.useState(() => getEntityInstance(entity));
   return useDetectUsageAndRerenderOnChange(instance);
 }
 
-const getEntityInstance = <T extends Entity>(entity: Type<T> | T) : T => {
+const getEntityInstance = <T extends Entity>(entity: Type<T> | T): T => {
   const isInstance = entity instanceof Entity;
   if (isInstance) {
     return entity;
   }
-  
+
   const isEntityConstrutor = entity.prototype instanceof Entity;
   if (isEntityConstrutor) {
     const Contructor = entity;
     return new Contructor();
   }
-  
+
   throw new Error('Argument not supprted');
 }
 
@@ -46,7 +46,7 @@ const useRegisterListener = <T extends Entity>(entity: T) => {
 
 
   const dispose = React.useCallback(() => {
-    if (ref.disposed)  return;
+    if (ref.disposed) return;
 
     listener.unregister();
     ref.final = ref.current;

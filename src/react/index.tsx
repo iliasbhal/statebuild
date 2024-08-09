@@ -1,6 +1,8 @@
 import React from 'react';
-import { useSelector } from '../hooks';
+import { useSelector } from './hooks';
 import { Atom, SelectorCallback, State as StateOG } from '../models';
+
+export * from './hooks';
 
 const STATEBUILD_UI_FLAG = '__STATEBUILD_UI__';
 
@@ -30,6 +32,11 @@ export class State extends StateOG {
     return State.makeRenderable(atom);
   }
 
+  protected static makeRenderable<U, A extends Atom<U>>(atom: A) {
+    const AtomUI = State.toReactComponent(atom);
+    return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {})
+  }
+
   public static toReactComponent = <A extends Atom<any>>(atom: A) => {
     const StateBuildAutoUI = React.memo(() => {
       const selector = React.useMemo(() => StateOG.select(() => atom.get()), []);
@@ -42,10 +49,5 @@ export class State extends StateOG {
     });
 
     return StateBuildAutoUI;
-  }
-
-  protected static makeRenderable<U, A extends Atom<U>>(atom: A) {
-    const AtomUI = State.toReactComponent(atom);
-    return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {})
   }
 }
