@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from './hooks';
-import { Atom, SelectorCallback, State as StateOG } from '../models';
+import { Atom, SelectorCallback, State as StateOG } from '../core';
 
 export * from './hooks';
 
@@ -32,7 +32,7 @@ export class State extends StateOG {
     return State.makeRenderable(atom);
   }
 
-  protected static makeRenderable<U, A extends Atom<U>>(atom: A) {
+  protected static makeRenderable<U, A extends Atom<U>>(atom: A) : A {
     const AtomUI = State.toReactComponent(atom);
     return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {})
   }

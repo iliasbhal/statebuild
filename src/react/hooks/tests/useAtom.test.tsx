@@ -1,6 +1,5 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { act } from 'react-dom/test-utils';
 import { State, useAtom } from '../..';
 
 describe('useAtom', () => {
@@ -34,7 +33,7 @@ describe('useAtom', () => {
     const wrapper = testingLib.render(<Wrapper />);
     const container = wrapper.getByTestId('container');
 
-    act(() => {
+    React.act(() => {
       container.click();
     })
 
@@ -59,7 +58,7 @@ describe('useAtom', () => {
     expect(container).toHaveTextContent('3');
     expect(countAtom.get()).toBe(3);
 
-    act(() => {
+    React.act(() => {
       countAtom.set(4);
     })
 
@@ -87,7 +86,7 @@ describe('useAtom', () => {
     expect(container).toHaveTextContent('3');
     expect(countAtom.get()).toBe(3);
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -118,7 +117,7 @@ describe('useAtom', () => {
     expect(container).toHaveTextContent('3');
     expect(countAtom.get()).toBe(3);
 
-    act(() => {
+    React.act(() => {
       countAtom.set(4);
       countAtom.set(5);
       countAtom.set(6);
@@ -164,7 +163,7 @@ describe('useAtom', () => {
     rerenderSpy1.mockClear();
     rerenderSpy2.mockClear();
 
-    act(() => {
+    React.act(() => {
       sharedAtom.set(4);
       sharedAtom.set(5);
       sharedAtom.set(6);
@@ -176,7 +175,7 @@ describe('useAtom', () => {
     rerenderSpy1.mockClear();
     rerenderSpy2.mockClear();
 
-    act(() => {
+    React.act(() => {
       notSharedAtom.set(4);
       notSharedAtom.set(5);
       notSharedAtom.set(6);

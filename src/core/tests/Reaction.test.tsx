@@ -84,7 +84,6 @@ describe('Reaction', () => {
     const atom = State.from(1);
     const reactionSpy = jest.fn().mockImplementation(() => {
       const prev = atom.get();
-      console.log('prev',prev)
       Reaction.effect(() => {
         atom.set(prev + 1);
       });

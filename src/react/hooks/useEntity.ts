@@ -1,5 +1,5 @@
 import React from "react";
-import { Entity } from '../../models';
+import { Entity } from '../../core';
 import { useForceRender } from '../../utils/useForceRender';
 import { makeDisposable } from "../../utils/disposable";
 

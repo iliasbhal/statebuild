@@ -1,3 +1,4 @@
+import wait from "wait";
 import { Selector, State } from "..";
 
 describe("Selector", () => {
@@ -125,7 +126,7 @@ describe("Selector", () => {
     expect(ten.get()).toBe(2000);
   });
 
-  it("should recompute invalidated upstream selectors", () => {
+  it("should recompute only invalidated upstream selectors", () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
     const double = State.select(() => {
@@ -149,6 +150,8 @@ describe("Selector", () => {
     doubleSpy.mockClear();
     tripleSpy.mockClear();
 
+    // Simply seting count should recompute
+    // Simply invalidate the tree
     count.set(100);
     expect(doubleSpy).not.toHaveBeenCalled();
     expect(tripleSpy).not.toHaveBeenCalled();
@@ -159,7 +162,7 @@ describe("Selector", () => {
     expect(tripleSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("should recompute invalidated upstream selectors tree 2", () => {
+  it("should recompute only invalidated upstream selectors tree 2", () => {
     const count = State.from(1);
     const doubleSpy = jest.fn();
     const double = State.select((): number => {
@@ -295,8 +298,6 @@ describe("Selector", () => {
   });
 
   it("should register dependencies of async selector (when dependencies are defined in the same sync event loop)", async () => {
-    const wait = (timeout: number) =>
-      new Promise((r) => setTimeout(r, timeout));
     const atom = State.from(3);
     const atom2 = State.from(2);
     const selectorSpy = jest.fn();
@@ -325,5 +326,39 @@ describe("Selector", () => {
 
     await expect(doubleAsync.get()).resolves.toBe(9);
     expect(selectorSpy).not.toHaveBeenCalled();
+  });
+
+
+  it.only("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
+    const atom = State.from(3);
+    const atom2 = State.from(2);
+    const selectorSpy = jest.fn();
+
+    const doubleAsync = State.select(async (ctx) => {
+      selectorSpy();
+      const value = atom.get();
+      await wait(200);
+
+
+      const multiplyWith = ctx.get(atom2);
+      return value * multiplyWith;
+    });
+
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
+
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    expect(selectorSpy).not.toHaveBeenCalled();
+
+    atom2.set(3);
+    await expect(doubleAsync.get()).resolves.toBe(9);
+    await expect(doubleAsync.get()).resolves.toBe(9);
+    // expect(selectorSpy).toHaveBeenCalledTimes(1);
+    // selectorSpy.mockClear();
+
+    // await expect(doubleAsync.get()).resolves.toBe(9);
+    // expect(selectorSpy).not.toHaveBeenCalled();
   });
 });

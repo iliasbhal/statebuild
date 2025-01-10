@@ -87,7 +87,7 @@ describe('Entity', () => {
   })
 })
 
-describe.only('Entity Map/Set', () => {
+describe('Entity Map/Set', () => {
 
   
   it('Set: can track when adding/removing an element', () => {

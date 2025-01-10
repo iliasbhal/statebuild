@@ -1,20 +1,28 @@
 import React from 'react';
-import { Selector, SelectorCallback } from '../../models';
+import { Selector, SelectorCallback, Reaction } from '../../core';
 
-export const useSelector = <Fn extends SelectorCallback>(selector: Selector<Fn>, ...args: unknown[]): ReturnType<Fn> => {
-  const [value, setValue] = React.useState(() => selector.get(...args));
+export const useSelector = <Fn extends SelectorCallback>(selector: Selector<Fn>): ReturnType<Fn> => {
+  const valueRef = React.useRef();
+  const [_, rerender] = React.useState(() => {
+    const value = selector.get();
+    valueRef.current = value;
+  });
 
   React.useEffect(() => {
-    const subscription = Selector.onUpstreamInvalidation(selector, () => {
-      const nextValue = selector.get(...args);
-      setValue(nextValue)
+    const reaction = new Reaction(() => {
+      const nextValue = selector.get();
+      if (valueRef.current !== nextValue) {
+        valueRef.current = nextValue;
+        rerender({});
+      }
     });
 
-    return () => {
-      subscription.unsubscribe();
-      selector.dispose();
-    }
-  }, [...args]);
+    reaction.start();
 
-  return value;
+    return () => {
+      reaction.dispose();
+    }
+  }, [selector]);
+
+  return valueRef.current;
 }

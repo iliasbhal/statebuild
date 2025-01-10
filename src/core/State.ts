@@ -3,14 +3,16 @@ import { Atom } from './Atom';
 import { Selector, SelectorCallback } from './Selector';
 import { Reaction } from './Reaction';
 
+type Select<Fn extends SelectorCallback> = ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>
+
 export class State extends Entity {
   static from<V>(value: V) {
     const atom = new Atom(value);
     return Atom.makeCallableAtom(atom);
   }
 
-  static select<Fn extends SelectorCallback>(id: string, selectorFn: Fn): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
-  static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>;
+  static select<Fn extends SelectorCallback>(id: string, selectorFn: Fn): Select<Fn>;
+  static select<Fn extends SelectorCallback>(selectorFn: Fn, b?: never): Select<Fn>;
   static select(a, b) {
     if (typeof a === 'string') {
       const selector = new Selector(b);

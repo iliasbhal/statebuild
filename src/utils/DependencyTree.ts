@@ -1,24 +1,70 @@
 import { EventBus } from "./EventBus";
 
-export class DependencyTree {
-  cache = new Set<object>();
-  dependentKeysByKey = new Map<object, Set<object>>();
-  invalidations = new EventBus<object>(); 
+export interface Disposable {
+  dispose?(): void;
+}
 
-  register(origin: any, dependent: any) {
-    const isDifferent = dependent !== origin; 
+export class DependencyTree {
+  items = new Set<Disposable>();
+
+  dependents = new Map<Disposable, Set<Disposable>>();
+  dependencies = new Map<Disposable, Set<Disposable>>();
+
+  invalidations = new EventBus<Disposable>();
+  activityChanged = new EventBus<any>('activityChanged');
+
+  register(origin: any, dependency: any) {
+    const isDifferent = dependency !== origin;
     if (!isDifferent) {
-      // Cannot be dependent on themselves
+      // Cannot be dependency on themselves
       return;
     }
 
-    this.cache.add(origin);
+    this.items.add(origin);
+    this.addDependency(origin, dependency);
+    this.addDependent(origin, dependency);
+  }
 
-    if (!this.dependentKeysByKey.has(dependent)) {
-      this.dependentKeysByKey.set(dependent, new Set());
+  // To know what is dependent on `dependency`
+  // This will be used to invalidate all ressources that depend on `dependency`
+  private addDependency(origin: any, dependency: any) {
+    if (!this.dependents.has(dependency)) this.dependents.set(dependency, new Set());
+    this.dependents.get(dependency).add(origin);
+  }
+
+  // To know who what are the dependencies of `origin`
+  // This will be used to know what are the dependencies of `origin`
+  private addDependent(origin: any, dependency: any) {
+    if (!this.dependencies.has(origin)) this.dependencies.set(origin, new Set());
+    this.dependencies.get(origin).add(dependency);
+  }
+
+  getDependencies(origin: any) {
+    return this.dependents.get(origin) || new Set();
+  }
+
+  remove(origin: any) {
+    // Also throw if there are things that have origin as a dependency.
+    const dependents = this.dependents.get(origin);
+    if (dependents?.size > 0) {
+      throw new Error('Cannot remove origin as it is a dependency of other items');
     }
 
-    this.dependentKeysByKey.get(dependent).add(origin);
+    // Remove origin from all its dependencies
+    // So that the dependencies will list origin as a dependency
+    const dependencies = this.dependencies.get(origin);
+    dependencies?.forEach(dependency => {
+      const dependencies = this.dependents.get(dependency);
+      dependencies?.delete(origin);
+
+      if (dependencies?.size === 0) {
+        this.activityChanged.publish(dependency, false);
+      }
+    });
+
+    this.items.delete(origin);
+    this.dependents.delete(origin);
+    this.dependencies.delete(origin);
   }
 
   autoClearCache = new AutoClearCache();
@@ -28,18 +74,19 @@ export class DependencyTree {
     }
 
     this.autoClearCache.add(origin);
-
-    // remove all caches of selector that have key as dependncy;
-    this.cache.delete(origin);
+    this.items.delete(origin);
     this.invalidations.publish(origin);
 
-    this.dependentKeysByKey.get(origin)?.forEach(dependentKey => {
-      this.invalidate(dependentKey);
+    const dependencies = this.getDependencies(origin);
+    dependencies.forEach(dependentKey => {
+      // We should force invalidate all dependents
+      // Because they have been invalidated by the origin
+      this.invalidate(dependentKey, true);
     });
   }
 
   has(origin: any) {
-    return this.cache.has(origin);
+    return this.items.has(origin);
   }
 }
 

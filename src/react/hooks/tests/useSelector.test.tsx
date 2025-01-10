@@ -1,7 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { act } from 'react-dom/test-utils';
 import { State, useSelector } from '../..';
+import { STATEBUILD_RAW_FLAG } from '../../../core';
 
 describe('useSelector', () => {
   it('should return selector value', () => {
@@ -50,7 +50,7 @@ describe('useSelector', () => {
     rerenderSpy.mockClear();
     expect(container).toHaveTextContent('6');
 
-    act(() => {
+    React.act(() => {
       container.click();
     })
 
@@ -58,15 +58,15 @@ describe('useSelector', () => {
     expect(container).toHaveTextContent('2');
   })
 
-  it('should accept last atom value and rerender only once', () => {
+  it('can update atom multiple times and rerender only once', () => {
     const count = State.from(3);
-    const doubleSelector = State.select(() => {
+    const doubleSelector = State.select('double', () => {
       return count.get() * 2;
     })
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const double = useSelector(doubleSelector);
+      const value = useSelector(doubleSelector);
       rerenderSpy();
       return (
         <div
@@ -75,9 +75,10 @@ describe('useSelector', () => {
             count.set(1);
             count.set(20);
             count.set(30);
+            count.set(100);
           }}
         >
-          {double}
+          {value}
         </div>
       )
     }
@@ -88,11 +89,13 @@ describe('useSelector', () => {
     rerenderSpy.mockClear();
     expect(container).toHaveTextContent('6');
 
-    act(() => {
+    React.act(() => {
       container.click();
     })
 
     expect(rerenderSpy).toHaveBeenCalledTimes(1);
-    expect(container).toHaveTextContent('60');
+    expect(container).toHaveTextContent('200');
   })
 })
+
+

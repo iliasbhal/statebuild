@@ -2,14 +2,16 @@ import { Atom } from "./Atom";
 import { Entity } from './base/Entity';
 import { DependencyTree } from '../utils/DependencyTree';
 
-export type SelectorCallback = (...args: any) => any;
+export type SelectorCallback = (ctx: SelectorContext) => any;
 export type SelectorAsyncCallback = (...args: any) => Promise<any>;
+
+export const STATEBUILD_RAW_FLAG = '__STATEBUILD_RAW__';
 
 export class Selector<Fn extends SelectorCallback, ID extends string = string> extends Atom<ReturnType<Fn>> {
   static tree = new DependencyTree();
-  static disposableRessources = new WeakMap<Selector<any>, {dispose: Function}[]>();
+  static disposableRessources = new WeakMap<Selector<any>, { dispose: Function }[]>();
 
-  selectorFn : Fn;
+  selectorFn: Fn;
   context = new SelectorContext(this);
   id: ID;
   constructor(selectorFn: Fn) {
@@ -17,12 +19,13 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     this.selectorFn = selectorFn;
   }
 
-  static makeCallableSelector<A extends Selector<any>>(selector: A) : A['selectorFn'] & A {
-    const callable = (...args) => selector.get(...args);
+  static makeCallableSelector<A extends Selector<any>>(selector: A): A['selectorFn'] & A {
+    const callable = () => selector.get();
 
     Object.setPrototypeOf(callable, Selector.prototype);
     const callableAtom = Object.assign(callable, selector, {
       get: selector.get.bind(selector),
+      [STATEBUILD_RAW_FLAG]: selector,
     });
 
     const coreAtom = Entity.getBaseObject(selector);
@@ -79,7 +82,7 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
         const nextValue = parent[updatedProp];
         const hasChanged = previousValue !== nextValue;
         if (hasChanged) {
-          core.invalidate(hasChanged);
+          core.invalidate(true);
           previousValue = nextValue;
         }
       });
@@ -95,15 +98,25 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     };
   }
 
-  addDependency(dependency: object) {
-    const dependencyKey = Entity.getBaseObject(this);
-    const dependentKey = Entity.getBaseObject(dependency);
-    return Selector.tree.register(dependencyKey, dependentKey);
+  static getDependencies(selector: Selector<any>) {
+    const core = Entity.getBaseObject(selector);
+    return Selector.tree.getDependencies(core);
   }
 
-  private invalidate(force?: boolean) {
-    const dependencyKey = Entity.getBaseObject(this);
-    return Selector.tree.invalidate(dependencyKey, force);
+  static onActivityChanged(selector: Selector<any>, handler: (isActive: boolean) => void) {
+    const core = Entity.getBaseObject(selector);
+    return Selector.tree.activityChanged.subscribe(core, handler);
+  }
+
+  addDependency(dependency: object) {
+    const dependent = Entity.getBaseObject(dependency);
+    const parent = Entity.getBaseObject(this);
+    return Selector.tree.register(parent, dependent);
+  }
+
+  private invalidate(force: boolean = false) {
+    const origin = Entity.getBaseObject(this);
+    return Selector.tree.invalidate(origin, force);
   }
 
   static runSelectorFn(selector: Selector<any>) {
@@ -117,7 +130,9 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   }
 
   dispose() {
-    return Selector.disposeRelatedRessources(this);
+    const base = Entity.getBaseObject(this);
+    Selector.disposeRelatedRessources(this);
+    Selector.tree.remove(base);
   }
 
   select(...args: unknown[]) {
@@ -136,11 +151,11 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     return super.get();
   }
 
-  set = (value: unknown) => {
+  set(value: unknown) {
     throw new Error('Selector is read only, cannot use .set() method');
   }
 
-  get = (...args) => {
+  get(...args) {
     return this.select(...args);
   }
 }
@@ -153,9 +168,9 @@ class SelectorContext {
     this.selector = selector;
   }
 
-  get = <A extends Atom<any>>(atom: A) : A['value'] => {
+  get = <A extends Atom<any>>(atom: A): A['value'] => {
     const isTrackable = atom instanceof Selector;
-    if(!isTrackable) {
+    if (!isTrackable) {
       return atom;
     }
 

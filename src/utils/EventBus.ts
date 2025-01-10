@@ -1,13 +1,22 @@
 export interface Subscription {
-  unsubscribe() : void;
+  unsubscribe(): void;
 }
 
-export type SubscriptionHandler = (message?: string | symbol) => void;
+export type SubscriptionHandler = (message?: string | symbol | number | boolean) => void;
 
 export class EventBus<Topic extends object> {
-  subscriptions = new WeakMap<Topic, Set<SubscriptionHandler>>();  
+  id: string;
+  subscriptions = new WeakMap<Topic, Set<SubscriptionHandler>>();
+
+  constructor(id?: string) {
+    this.id = id;
+  }
 
   publish = (topic: Topic, message?: Parameters<SubscriptionHandler>[0]) => {
+    // if (this.id === 'dependencyCountChanged') {
+    //   console.log('Publish', topic, message);
+    // }
+
     const subscriptions = this.subscriptions.get(topic);
     if (!subscriptions) {
       return;
@@ -18,7 +27,11 @@ export class EventBus<Topic extends object> {
     });
   }
 
-  subscribe = (topic: Topic, handler: SubscriptionHandler) : Subscription => {
+  subscribe = (topic: Topic, handler: SubscriptionHandler): Subscription => {
+    // if (this.id === 'dependencyCountChanged') {
+    //   console.log('Publish', topic);
+    // }
+
     if (!this.subscriptions.has(topic)) {
       this.subscriptions.set(topic, new Set());
     }

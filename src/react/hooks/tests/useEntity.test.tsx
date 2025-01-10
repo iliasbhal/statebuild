@@ -1,7 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { act } from 'react-dom/test-utils';
 import { State, useEntity } from '../..';
+
 
 describe('useEntity', () => {
   class Count extends State {
@@ -43,13 +43,13 @@ describe('useEntity', () => {
     const wrapper = testingLib.render(<Container />);
     const container = wrapper.getByTestId('container');
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
     expect(container).toHaveTextContent("1 0");
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -86,7 +86,7 @@ describe('useEntity', () => {
     const container = wrapper.getByTestId('container');
     expect(container).toHaveTextContent("0x times");
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -126,7 +126,7 @@ describe('useEntity', () => {
 
     expect(container.innerHTML).toBe('John counts to 0');
 
-    act(() => {
+    React.act(() => {
       person.setFirstName('Lynda');
     });
 
@@ -160,7 +160,7 @@ describe('useEntity', () => {
     const wrapper = testingLib.render(<Container />);
     const container = wrapper.getByTestId('container');
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -169,6 +169,44 @@ describe('useEntity', () => {
 
     expect(container).toHaveTextContent("4");
     expect(renderSpy).toHaveBeenCalledTimes(2);
+  })
+
+
+  it('should rerender when data is updated while rendering', () => {
+    const renderTrack = jest.fn();
+
+    const Container = (props: { count: Count }) => {
+      const store = useEntity(props.count)
+
+      const prevCount = store.count;
+
+      if (store.count !== 5) {
+        store.setCount(5);
+      }
+
+      renderTrack();
+      return (
+        <div
+          data-testid="container"
+          onClick={() => {
+            store.count += 1;
+          }}
+        >
+          {prevCount}
+          {store.count}
+        </div>
+      )
+    }
+
+    const count = new Count();
+    const wrapper = testingLib.render(<Container count={count} />);
+
+    
+    const container = wrapper.getByTestId('container');
+    expect(container).toHaveTextContent("5");
+    // expect(container).toHaveTextContent("5");
+    // expect(count.count).toEqual(3);
+    expect(renderTrack).toHaveBeenCalledTimes(1);
   })
 
   it('should rerender when updating attribute from within component', () => {
@@ -195,7 +233,7 @@ describe('useEntity', () => {
     renderTrack.mockClear();
     expect(container).toHaveTextContent("0");
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -225,7 +263,7 @@ describe('useEntity', () => {
     renderTrack.mockClear();
     expect(container).toHaveTextContent("0");
 
-    act(() => {
+    React.act(() => {
       count.count += 3;
     })
 
@@ -256,7 +294,7 @@ describe('useEntity', () => {
     const wrapper = testingLib.render(<Container />);
     const container = wrapper.getByTestId('container');
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -264,7 +302,7 @@ describe('useEntity', () => {
 
     expect(renderSpy).toHaveBeenCalledTimes(1);
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -329,7 +367,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("There are 0 people.");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
       container.click();
       container.click();
@@ -369,7 +407,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("Last Person: 2 (initial)");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -406,7 +444,7 @@ describe('useEntity', () => {
     const container = wrapper.getByTestId('container-store');
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -445,7 +483,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("FirstName LastName");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -497,7 +535,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("First,");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -505,7 +543,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("First(updated),");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -513,7 +551,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("First(updated),Second,");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -522,7 +560,7 @@ describe('useEntity', () => {
     renderTrack.mockClear();
 
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 
@@ -530,7 +568,7 @@ describe('useEntity', () => {
     expect(container.innerHTML).toBe("Third,First(updated),Second(updated),");
     renderTrack.mockClear();
 
-    act(() => {
+    React.act(() => {
       container.click();
     });
 

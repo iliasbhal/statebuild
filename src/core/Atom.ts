@@ -19,7 +19,7 @@ export class Atom<T> extends Entity {
   }
 
   static makeCallableAtom<A extends Atom<any>>(atom: A) {
-    const callable: () => A['value'] = (...args) => (atom as any).get(...args);
+    const callable: () => A['value'] = () => (atom as any).get();
 
     Object.setPrototypeOf(callable, Atom.prototype);
     const callableAtom = Object.assign(callable, atom);

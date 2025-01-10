@@ -1,4 +1,4 @@
-import { Entity, Atom, Selector, SelectorCallback, SelectorAsyncCallback } from '../../models';
+import { Entity, Atom, Selector, SelectorCallback, SelectorAsyncCallback } from '../../core';
 import { useEntity } from './useEntity';
 import { useSelector } from './useSelector';
 import { useAtom } from './useAtom';

@@ -1,8 +1,7 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { act } from 'react-dom/test-utils';
 import { State, enableAutoRendering } from '../index'
-import { useAtom } from '../../hooks';
+import { useAtom } from '../hooks';
 
 describe('React', () => {
   enableAutoRendering();
@@ -23,7 +22,7 @@ describe('React', () => {
     expect(wrapper.container).toHaveTextContent('1');
 
     renderSpy.mockClear();
-    await act(() => {
+    await React.act(() => {
       Numb.set(2);
     });
 
@@ -49,7 +48,7 @@ describe('React', () => {
     expect(wrapper.container).toHaveTextContent('odd');
 
     renderSpy.mockClear();
-    await act(() => {
+    await React.act(() => {
       Numb.set(2);
     });
 

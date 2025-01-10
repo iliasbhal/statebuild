@@ -8,14 +8,14 @@ export class Reaction extends Selector<ReactionCallback> {
   }
 
   static current: Reaction | null = null;
-  static hibernatedReactions = new Set<Reaction>();
+  static preventInifiniteLoop = new Set<Reaction>();
 
   subscription: ReturnType<typeof Selector.onUpstreamInvalidation>
   start() {
     this.execute();
 
     this.subscription = Selector.onUpstreamInvalidation(this, () => {
-      if (Reaction.hibernatedReactions.has(this)) {
+      if (Reaction.preventInifiniteLoop.has(this)) {
         return;
       }
 
@@ -29,18 +29,18 @@ export class Reaction extends Selector<ReactionCallback> {
   }
 
   dispose() {
-    this.stop();
+    this.subscription?.unsubscribe();
     super.dispose();
   }
 
   stop() {
-    this.subscription?.unsubscribe();
+    this.dispose();
   }
 
   static effect(callback: () => void) {
     const reaction = Reaction.current!;
-    Reaction.hibernatedReactions.add(reaction);
+    Reaction.preventInifiniteLoop.add(reaction);
     callback();
-    Reaction.hibernatedReactions.delete(reaction);
+    Reaction.preventInifiniteLoop.delete(reaction);
   }
 }
