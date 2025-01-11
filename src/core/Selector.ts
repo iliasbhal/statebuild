@@ -133,6 +133,7 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     const base = Entity.getBaseObject(this);
     Selector.disposeRelatedRessources(this);
     Selector.tree.remove(base);
+    Entity.dispose(this);
   }
 
   select(...args: unknown[]) {

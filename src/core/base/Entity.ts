@@ -39,6 +39,11 @@ export class Entity {
     return Entity.originalObjectByProxy.get(obj) || obj;
   }
 
+  static dispose(obj: Entity) {
+    Entity.originalObjectByProxy.delete(obj);
+    return;
+  }
+
   static checkShouldWrapWithProxy = (obj, prop, value) => {
     const isPromise = value instanceof Promise;
     if (isPromise) {

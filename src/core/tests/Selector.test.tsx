@@ -1,5 +1,5 @@
 import wait from "wait";
-import { Selector, State } from "..";
+import { Entity, Selector, State } from "..";
 
 describe("Selector", () => {
   it("can create a selector with other atoms", () => {
@@ -328,8 +328,33 @@ describe("Selector", () => {
     expect(selectorSpy).not.toHaveBeenCalled();
   });
 
+  it.skip('should dependency tree when dependency is not active anymore', async () => {
+    const atom = State.from(1);
+    const atom2 = State.from(1000);
 
-  it.only("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
+    const selectorSpy = jest.fn();
+    const doubleAsync = State.select(async (ctx) => {
+      selectorSpy();
+      const value1 = atom.get();
+      if (value1 >= 2) {
+        return value1;
+      }
+
+      const value2 = atom2.get();
+      return value2;
+    });
+    
+    await expect(doubleAsync.get()).resolves.toBe(1000);
+    atom.set(2);
+    await expect(doubleAsync.get()).resolves.toBe(2);
+    atom2.set(3);
+
+    expect(Selector.tree.getDependencies(Entity.getBaseObject(atom)).size).toBe(1);
+    expect(Selector.tree.getDependencies(Entity.getBaseObject(atom2)).size).toBe(0);
+    expect(Selector.tree.getDependents(Entity.getBaseObject(doubleAsync)).size).toBe(1);
+  })
+
+  it.skip("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
     const atom = State.from(3);
     const atom2 = State.from(2);
     const selectorSpy = jest.fn();

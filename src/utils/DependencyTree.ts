@@ -43,6 +43,10 @@ export class DependencyTree {
     return this.dependents.get(origin) || new Set();
   }
 
+  getDependents(origin: any) {
+    return this.dependencies.get(origin) || new Set();
+  }
+
   remove(origin: any) {
     // Also throw if there are things that have origin as a dependency.
     const dependents = this.dependents.get(origin);

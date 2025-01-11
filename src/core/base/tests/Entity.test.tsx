@@ -85,6 +85,11 @@ describe('Entity', () => {
       job: 'baker',
     });
   })
+
+  it.skip('should not keep a reference on items after dipose', () => {
+    const worker = new Worker();
+    Entity.dispose(worker);
+  })
 })
 
 describe('Entity Map/Set', () => {
