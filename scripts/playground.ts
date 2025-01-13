@@ -35,16 +35,13 @@ function executeGeneratorFunction(generatorFn) {
   return new Promise(function (resolve, reject) {
     const generatorStep = (key, arg) => {
       try {
-        console.log('step -> just before');
-
         const info = generator[key](arg)
-        console.log('step -> just after');
 
-        const value = info.value
         if (info.done) {
-          resolve(value)
+          resolve(info.value)
         } else {
-          Promise.resolve(value).then(api.next, api.throw)
+          Promise.resolve(info.value)
+            .then(api.next, api.throw)
         }
 
       } catch (error) {
@@ -54,7 +51,7 @@ function executeGeneratorFunction(generatorFn) {
     }
 
     const api = {
-      next: (value) => generatorStep("next", value),
+      next: (yielded) => generatorStep("next", yielded),
       throw: (err) => generatorStep("throw", err),
     };
 
