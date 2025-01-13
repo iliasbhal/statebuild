@@ -78,6 +78,7 @@ export class DependencyTree {
     }
 
     this.autoClearCache.add(origin);
+
     this.items.delete(origin);
     this.invalidations.publish(origin);
 
@@ -87,6 +88,8 @@ export class DependencyTree {
       // Because they have been invalidated by the origin
       this.invalidate(dependentKey, true);
     });
+
+    // this.remove(origin);
   }
 
   has(origin: any) {

@@ -17,6 +17,8 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   constructor(selectorFn: Fn) {
     super(null);
     this.selectorFn = selectorFn;
+
+    // console.log('selectorFn', selectorFn, Generator.isGeneratorFunction(selectorFn));
   }
 
   static makeCallableSelector<A extends Selector<any>>(selector: A): A['selectorFn'] & A {
@@ -122,10 +124,23 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   static runSelectorFn(selector: Selector<any>) {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
+
+    const isGenerator = Generator.isGeneratorFunction(selector.selectorFn);
+    if (isGenerator) {
+      const registration = Selector.autoRegisterSelectorDependencies(selector);
+      const result = Generator.execute(selector.selectorFn, [selector.context], (executeStep) => {
+        const registration = Selector.autoRegisterSelectorDependencies(selector);
+        executeStep();
+        registration.unregister();
+      });
+
+      registration.unregister();
+      return result;
+    }
+
     const registration = Selector.autoRegisterSelectorDependencies(selector)
     const selectedValue = selector.selectorFn(selector.context);
     registration.unregister();
-
     return selectedValue;
   }
 
@@ -162,7 +177,7 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
 }
 
 
-class SelectorContext {
+export class SelectorContext {
   selector: Selector<any>;
 
   constructor(selector: Selector<any> = null) {
@@ -179,5 +194,47 @@ class SelectorContext {
     const value = atom.get();
     registration.unregister();
     return value;
+  }
+}
+
+export class Generator {
+  static isGeneratorFunction(fn: any) {
+    const GeneratorFunction = (function* () { yield undefined; }).constructor;
+    const isGenerator = fn instanceof GeneratorFunction;
+    return isGenerator;
+  }
+
+  static execute(generatorFn, args: any, step) {
+    const generator = generatorFn(...args);
+
+    return new Promise(function (resolve, reject) {
+      const generatorStep = (key, arg) => {
+        try {
+          let info = null
+
+          step(() => {
+            info = generator[key](arg)
+          });
+
+          const value = info.value
+          if (info.done) {
+            resolve(value)
+          } else {
+            Promise.resolve(value).then(api.next, api.throw)
+          }
+
+        } catch (error) {
+          reject(error)
+          return
+        }
+      }
+
+      const api = {
+        next: (value) => generatorStep("next", value),
+        throw: (err) => generatorStep("throw", err),
+      };
+
+      api.next(undefined)
+    })
   }
 }

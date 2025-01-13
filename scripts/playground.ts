@@ -3,15 +3,14 @@ import wait from 'wait';
 const main = async () => {
 
   const waitAndReturn = async (value: number, timeout: number) => {
+    console.log('waitAndReturn')
     await wait(timeout);
     return value;
   }
 
   const aaa = function* () {
-    console.log('\n BEFORE 1');
     const value = yield waitAndReturn(10, 1000);
 
-    console.log('\n BEFORE 2');
     return yield waitAndReturn(value * 2, 1000);
   };
 
@@ -30,21 +29,22 @@ Promise.resolve()
 
 
 
-function executeGeneratorFunction(fn) {
-  const generator = fn();
+function executeGeneratorFunction(generatorFn) {
+  const generator = generatorFn();
 
   return new Promise(function (resolve, reject) {
     const generatorStep = (key, arg) => {
       try {
         console.log('step -> just before');
+
         const info = generator[key](arg)
+        console.log('step -> just after');
+
         const value = info.value
         if (info.done) {
           resolve(value)
-          console.log('step -> just after');
         } else {
-          Promise.resolve(value).then(_next, _throw)
-          console.log('steppp -> just after');
+          Promise.resolve(value).then(api.next, api.throw)
         }
 
       } catch (error) {
@@ -53,9 +53,11 @@ function executeGeneratorFunction(fn) {
       }
     }
 
-    const _next = (value) => generatorStep("next", value)
-    const _throw = (err) => generatorStep("throw", err)
+    const api = {
+      next: (value) => generatorStep("next", value),
+      throw: (err) => generatorStep("throw", err),
+    };
 
-    _next(undefined)
+    api.next(undefined)
   })
 }
