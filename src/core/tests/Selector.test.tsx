@@ -1,6 +1,5 @@
 import wait from "wait";
 import { Entity, Selector, State } from "..";
-import { AsyncContext } from "../../utils/SimpleAsyncContext";
 
 describe("Selector", () => {
   it("can create a selector with other atoms", () => {
@@ -395,10 +394,10 @@ describe("Selector", () => {
     const selectorSpy = jest.fn();
 
     const double1 = State.select('Double',async () => {
-      console.log('Double1 context', AsyncContext.get().id)
+      // console.log('Double1 context', AsyncContext.get().id)
       await wait(200);
 
-      console.log('Double1 context 2', AsyncContext.get().id)
+      // console.log('Double1 context 2', AsyncContext.get().id)
       return atom.get() * 2;
     });
 
@@ -416,7 +415,7 @@ describe("Selector", () => {
       // console.log('Total context 2', AsyncContext.get().id)
       const add1 = await double1.get();
 
-      console.log('Total context 3', AsyncContext.get().id)
+      // console.log('Total context 3', AsyncContext.get().id)
       // const add2 = await atom2.get();
       // const add3 = await double2.get();
 

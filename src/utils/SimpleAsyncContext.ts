@@ -1,7 +1,7 @@
 const OriginalPromise = Promise;
 
-export class AsyncContext {
-  static current: AsyncContext = null
+export class SimpleAsyncContext {
+  static current: SimpleAsyncContext = null
 
   static get() {
     return this.current;
@@ -16,14 +16,14 @@ export class AsyncContext {
     return currentId;
   }
 
-  static set(ctx: AsyncContext) {
+  static set(ctx: SimpleAsyncContext) {
     this.current = ctx;
   }
 
   static fork(id?: any) {
-    const parent = AsyncContext.get();
+    const parent = SimpleAsyncContext.get();
     const fordId = `${parent?.id || '.'}/${id || '.'}`;
-    const fork = new AsyncContext(fordId, parent);
+    const fork = new SimpleAsyncContext(fordId, parent);
     fork.start();
     return fork
   }
@@ -37,12 +37,12 @@ export class AsyncContext {
 
   static wrap(id: any, callback: Function) {
     return (...args) => {
-      return AsyncContext.run(id, () => callback(...args));
+      return SimpleAsyncContext.run(id, () => callback(...args));
     }
   }
 
   static assert(id: any) {
-    const current = AsyncContext.get();
+    const current = SimpleAsyncContext.get();
     if (current.id !== id) {
       console.log('Expected', id, 'but got', current.id);
       throw new Error(`Expected ${id} but got ${current.id}`);
@@ -50,7 +50,7 @@ export class AsyncContext {
   }
 
   static assertParent(id: any) {
-    const current = AsyncContext.get();
+    const current = SimpleAsyncContext.get();
     if (current.parent.id !== id) {
       console.log('Expected Parent', id, 'but got', current.id);
       throw new Error(`Expected Parent ${id} but got ${current.id}`);
@@ -59,37 +59,37 @@ export class AsyncContext {
 
   static canLog = false;
   static debug() {
-    AsyncContext.canLog = true;
+    SimpleAsyncContext.canLog = true;
   }
 
   static endDebug() {
-    AsyncContext.canLog = false;
+    SimpleAsyncContext.canLog = false;
   }
 
   static log(...args: any[]) {
-    if (!AsyncContext.canLog) return;
+    if (!SimpleAsyncContext.canLog) return;
     console.log(...args);
   }
 
   id: any;
-  parent: AsyncContext;
-  constructor(id: any, parent: AsyncContext) {
+  parent: SimpleAsyncContext;
+  constructor(id: any, parent: SimpleAsyncContext) {
     this.id = id;
     this.parent = parent;
   }
 
   start() {
-    AsyncContext.set(this);
-    AsyncContext.log('start', this.id);
+    SimpleAsyncContext.set(this);
+    SimpleAsyncContext.log('start', this.id);
   }
   reset() {
-    AsyncContext.set(this.parent);
-    AsyncContext.log('reset', this.id, '-> ', this.parent?.id);
+    SimpleAsyncContext.set(this.parent);
+    SimpleAsyncContext.log('reset', this.id, '-> ', this.parent?.id);
   }
 }
 
 const PromiseWithContext = function (callback) {
-  const fork = AsyncContext.fork()
+  const fork = SimpleAsyncContext.fork()
   const originalPromise = new OriginalPromise((resolve, reject) => {
 
     const wrapResolve = (...args: any[]) => {
@@ -113,7 +113,7 @@ const PromiseWithContext = function (callback) {
 
   this.then = function (callback) {
 
-    const fork2 = AsyncContext.fork()
+    const fork2 = SimpleAsyncContext.fork()
     return originalPromise.then((result) => {
 
       fork2.reset();
@@ -125,7 +125,7 @@ const PromiseWithContext = function (callback) {
   this.catch = function (callback) {
     fork.reset();
 
-    const fork2 = AsyncContext.fork()
+    const fork2 = SimpleAsyncContext.fork()
     return originalPromise.catch((result) => {
       fork2.reset();
 
