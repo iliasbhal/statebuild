@@ -17,8 +17,6 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   constructor(selectorFn: Fn) {
     super(null);
     this.selectorFn = selectorFn;
-
-    // console.log('selectorFn', selectorFn, Generator.isGeneratorFunction(selectorFn));
   }
 
   static makeCallableSelector<A extends Selector<any>>(selector: A): A['selectorFn'] & A {
@@ -164,7 +162,8 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
       super.set(selectedValue);
     }
 
-    return super.get();
+    const value = super.get();
+    return value;
   }
 
   set(value: unknown) {
@@ -185,10 +184,10 @@ export class SelectorContext {
   }
 
   get = <A extends Atom<any>>(atom: A): A['value'] => {
-    const isTrackable = atom instanceof Selector;
-    if (!isTrackable) {
-      return atom;
-    }
+    // const isTrackable = atom instanceof Selector;
+    // if (!isTrackable) {
+    //   return atom.get();
+    // }
 
     const registration = Selector.autoRegisterSelectorDependencies(this.selector);
     const value = atom.get();

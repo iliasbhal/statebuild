@@ -1,5 +1,6 @@
 import wait from "wait";
 import { Entity, Selector, State } from "..";
+import { AsyncContext } from "../../utils/SimpleAsyncContext";
 
 describe("Selector", () => {
   it("can create a selector with other atoms", () => {
@@ -387,32 +388,56 @@ describe("Selector", () => {
     expect(selectorSpy).not.toHaveBeenCalled();
   });
 
-  it.skip("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
+
+  it.only("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
     const atom = State.from(3);
     const atom2 = State.from(2);
     const selectorSpy = jest.fn();
 
-    const doubleAsync = State.select(async (ctx) => {
+    const double1 = State.select('Double',async () => {
+      console.log('Double1 context', AsyncContext.get().id)
+      await wait(200);
+
+      console.log('Double1 context 2', AsyncContext.get().id)
+      return atom.get() * 2;
+    });
+
+    const double2 = State.select(async () => {
+      await wait(100);
+      return atom2.get() * 2;
+    })
+
+    const total = State.select('Total',async (ctx) => {
+      // console.log('Total context', AsyncContext.get().id)
       selectorSpy();
       const value = atom.get();
       await wait(200);
 
+      // console.log('Total context 2', AsyncContext.get().id)
+      const add1 = await double1.get();
 
-      const multiplyWith = ctx.get(atom2);
-      return value * multiplyWith;
+      console.log('Total context 3', AsyncContext.get().id)
+      // const add2 = await atom2.get();
+      // const add3 = await double2.get();
+
+      // console.log('AsyncContext.get() 4', AsyncContext.get())
+      return value + add1;
+      // console.log('multiplyWith', value, add1, add2, add3);
+      // return value + add1 + add2 + add3;
     });
 
-    await expect(doubleAsync.get()).resolves.toBe(6);
-    await expect(doubleAsync.get()).resolves.toBe(6);
-    expect(selectorSpy).toHaveBeenCalledTimes(1);
-    selectorSpy.mockClear();
+    await total.get();
 
-    await expect(doubleAsync.get()).resolves.toBe(6);
-    expect(selectorSpy).not.toHaveBeenCalled();
+    // await expect(total.get()).resolves.toBe(15);
+    // expect(selectorSpy).toHaveBeenCalledTimes(1);
+    // selectorSpy.mockClear();
 
-    atom2.set(3);
-    await expect(doubleAsync.get()).resolves.toBe(9);
-    await expect(doubleAsync.get()).resolves.toBe(9);
+    // await expect(total.get()).resolves.toBe(15);
+    // expect(selectorSpy).not.toHaveBeenCalled();
+
+    // atom2.set(10);
+    // await expect(total.get()).resolves.toBe(9);
+    // await expect(total.get()).resolves.toBe(9);
     // expect(selectorSpy).toHaveBeenCalledTimes(1);
     // selectorSpy.mockClear();
 

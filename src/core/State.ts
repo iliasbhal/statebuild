@@ -1,6 +1,6 @@
+import { Selector, SelectorCallback } from './Selector';
 import { Entity } from './base/Entity';
 import { Atom } from './Atom';
-import { Selector, SelectorCallback } from './Selector';
 import { Reaction } from './Reaction';
 
 type Select<Fn extends SelectorCallback> = ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>
