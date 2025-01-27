@@ -1,4 +1,3 @@
-import React from 'react';
 import { Entity } from './base/Entity';
 
 export class Atom<T> extends Entity {
@@ -24,12 +23,13 @@ export class Atom<T> extends Entity {
     Object.setPrototypeOf(callable, Atom.prototype);
     const callableAtom = Object.assign(callable, atom);
 
-
     // ensure that "this" value is set correctly
-    Object.assign(callable, {
-      get: atom.get.bind(atom),
-      set: atom.set.bind(atom),
-    })
+    Object.getOwnPropertyNames(Object.getPrototypeOf(atom))
+      .forEach((key) => {
+        Object.assign(callable, {
+          [key]: atom[key].bind(atom),
+        })
+      })
 
     const coreAtom = Entity.getBaseObject(atom);
     Entity.originalObjectByProxy.set(callableAtom, coreAtom);

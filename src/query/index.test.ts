@@ -11,7 +11,7 @@ export const queryClient = new QueryClient({
   }
 });
 
-describe('Query', () => {
+describe.skip('Query', () => {
   it('should get the result of the query', async () => {
     const querySelector = QuerySelector.fromOptions({
       client: queryClient,

@@ -1,15 +1,17 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { State, useAtom } from '../..';
+import { State } from '../..';
+
+State.enableAutoRendering();
 
 describe('useAtom', () => {
-  it('should display initial value', () => {
+  it('should display atom value', () => {
     const countAtom = State.from(3);
+    
     const Wrapper = () => {
-      const [count, setCount] = useAtom(countAtom);
       return (
         <div data-testid="container">
-          {count}
+          {countAtom}
         </div>
       )
     }
@@ -19,19 +21,39 @@ describe('useAtom', () => {
     expect(container).toHaveTextContent('3');
   })
 
-  it('should update atom when setState is called', () => {
+  it('should display atom value 2', () => {
     const countAtom = State.from(3);
+    
     const Wrapper = () => {
-      const [count, setCount] = useAtom(countAtom);
       return (
-        <div data-testid="container" onClick={() => setCount(count + 1)}>
-          {count}
+        <div data-testid="container">
+          {countAtom}
         </div>
       )
     }
 
     const wrapper = testingLib.render(<Wrapper />);
     const container = wrapper.getByTestId('container');
+    expect(container).toHaveTextContent('3');
+  })
+
+  it('should not rerender with atom is not read during render block', () => {
+    const countAtom = State.from(3);
+    const rerenderSpy = jest.fn();
+    const Wrapper = () => {
+      rerenderSpy();
+      return (
+        <div data-testid="container" onClick={() => countAtom.set(countAtom.get() + 1)}>
+          {countAtom}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(<Wrapper />);
+    const container = wrapper.getByTestId('container');
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+
 
     React.act(() => {
       container.click();
@@ -39,93 +61,83 @@ describe('useAtom', () => {
 
     expect(container).toHaveTextContent('4');
     expect(countAtom.get()).toBe(4);
+    expect(rerenderSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should rerender when atom is read during render block', () => {
+    const atom = State.from(3);
+    const rerenderSpy = jest.fn();
+    const Wrapper = () => {
+      rerenderSpy();
+
+      const value = atom.get()
+      return (
+        <div 
+          data-testid="container"
+          onClick={() => {
+            atom.set(value + 1)
+          }}
+
+        >
+          {value}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(<Wrapper />);
+    const container = wrapper.getByTestId('container');
+    expect(container).toHaveTextContent('3');
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+
+
+    console.log('-----')
+    React.act(() => {
+      container.click();
+    })
+
+    // wrapper.debug();
+
+    expect(atom.get()).toBe(4);
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+    expect(container).toHaveTextContent('4');
+
+
+    React.act(() => {
+      container.click();
+    })
+
+    // wrapper.debug();
+
+    expect(atom.get()).toBe(5);
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+    expect(container).toHaveTextContent('5');
   });
 
   it('should rerender when atom update from outside the component', () => {
     const countAtom = State.from(3);
 
     const Wrapper = () => {
-      const [count, setCount] = useAtom(countAtom);
       return (
         <div data-testid="container">
-          {count}
+          {countAtom.get() + 1}
         </div>
       )
     }
 
     const wrapper = testingLib.render(<Wrapper />);
     const container = wrapper.getByTestId('container');
-    expect(container).toHaveTextContent('3');
+    expect(container).toHaveTextContent('4');
     expect(countAtom.get()).toBe(3);
 
     React.act(() => {
       countAtom.set(4);
     })
 
-    expect(container).toHaveTextContent('4');
+    expect(container).toHaveTextContent('5');
     expect(countAtom.get()).toBe(4);
-  })
-
-  it('should batch rerenders when atom is updated from inside the component', () => {
-    const countAtom = State.from(3);
-
-    const rerenderSpy = jest.fn();
-    const Wrapper = () => {
-      const [count, setCount] = useAtom(countAtom);
-      rerenderSpy();
-      return (
-        <div data-testid="container" onClick={() => setCount(count + 1)}>
-          {count}
-        </div>
-      )
-    }
-
-    const wrapper = testingLib.render(<Wrapper />);
-    const container = wrapper.getByTestId('container');
-    rerenderSpy.mockClear();
-    expect(container).toHaveTextContent('3');
-    expect(countAtom.get()).toBe(3);
-
-    React.act(() => {
-      container.click();
-      container.click();
-      container.click();
-    })
-
-    expect(rerenderSpy).toHaveBeenCalledTimes(1);
-    expect(countAtom.get()).toBe(4);
-    expect(container).toHaveTextContent('4');
-  })
-
-  it('should batch rerenders when atom is updated from outide the component', () => {
-    const countAtom = State.from(3);
-
-    const rerenderSpy = jest.fn();
-    const Wrapper = () => {
-      const [count, setCount] = useAtom(countAtom);
-      rerenderSpy();
-      return (
-        <div data-testid="container" onClick={() => setCount(count + 1)}>
-          {count}
-        </div>
-      )
-    }
-
-    const wrapper = testingLib.render(<Wrapper />);
-    const container = wrapper.getByTestId('container');
-    rerenderSpy.mockClear();
-    expect(container).toHaveTextContent('3');
-    expect(countAtom.get()).toBe(3);
-
-    React.act(() => {
-      countAtom.set(4);
-      countAtom.set(5);
-      countAtom.set(6);
-    })
-
-    expect(rerenderSpy).toHaveBeenCalledTimes(1);
-    expect(countAtom.get()).toBe(6);
-    expect(container).toHaveTextContent('6');
   })
 
   it('should rerender every component reading a specific atom', () => {
@@ -134,18 +146,14 @@ describe('useAtom', () => {
 
     const rerenderSpy1 = jest.fn();
     const Component1 = () => {
-      const [shared, setShared] = useAtom(sharedAtom);
       rerenderSpy1();
-      return <div data-testid="Component1">{shared}</div>;
+      return <div data-testid="Component1">{sharedAtom.get()}</div>;
     }
 
     const rerenderSpy2 = jest.fn();
     const Component2 = () => {
-      const [shared, setShared] = useAtom(sharedAtom);
-      const [notShared, setNotShared] = useAtom(notSharedAtom);
-
       rerenderSpy2();
-      return <div data-testid="Component2">{shared} {notShared}</div>;
+      return <div data-testid="Component2">{sharedAtom.get()} {notSharedAtom.get()}</div>;
     }
 
     const Wrapper = () => {
@@ -169,8 +177,8 @@ describe('useAtom', () => {
       sharedAtom.set(6);
     })
 
-    expect(rerenderSpy1).toHaveBeenCalledTimes(1);
-    expect(rerenderSpy2).toHaveBeenCalledTimes(1);
+    expect(rerenderSpy1).toHaveBeenCalledTimes(3);
+    expect(rerenderSpy2).toHaveBeenCalledTimes(3);
 
     rerenderSpy1.mockClear();
     rerenderSpy2.mockClear();
@@ -182,6 +190,6 @@ describe('useAtom', () => {
     })
 
     expect(rerenderSpy1).not.toHaveBeenCalled();
-    expect(rerenderSpy2).toHaveBeenCalledTimes(1);
+    expect(rerenderSpy2).toHaveBeenCalledTimes(3);
   })
 })

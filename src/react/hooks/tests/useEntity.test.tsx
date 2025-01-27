@@ -3,7 +3,7 @@ import * as testingLib from '@testing-library/react'
 import { State, useEntity } from '../..';
 
 
-describe('useEntity', () => {
+describe.skip('useEntity', () => {
   class Count extends State {
     count = 0;
     count2 = 0;

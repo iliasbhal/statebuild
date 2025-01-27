@@ -4069,6 +4069,11 @@ signal-exit@^3.0.3, signal-exit@^3.0.7:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.7.tgz#a9a1767f8af84155114eaabd73f99273c8f59ad9"
   integrity sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==
 
+simple-async-context@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/simple-async-context/-/simple-async-context-1.0.3.tgz#8d1df25d7a6e2f1a2d94f6843b71b3577782866f"
+  integrity sha512-rBiRPSPOlV0AM34H8iK77IQWKsLjkRPKzndTNBj6FoidI8n/MJ8FwcDzQHBu/2+BYh4j6LXMzcaHRJDlYcQasQ==
+
 sisteransi@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/sisteransi/-/sisteransi-1.0.5.tgz#134d681297756437cc05ca01370d3a7a571075ed"

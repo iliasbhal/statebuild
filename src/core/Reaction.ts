@@ -1,4 +1,6 @@
-import { Selector } from "./Selector";
+import { Selector, SelectorContext } from "./Selector";
+import { Entity } from "./base/Entity";
+import { Track } from "./Track";
 
 type ReactionCallback = () => any;
 
@@ -7,25 +9,39 @@ export class Reaction extends Selector<ReactionCallback> {
     super(callback);
   }
 
-  static current: Reaction | null = null;
-  static preventInifiniteLoop = new Set<Reaction>();
+  static runningEffect = new WeakSet<Selector<any>>();
 
-  subscription: ReturnType<typeof Selector.onUpstreamInvalidation>
+  context = new ReactionContext(this);
+  subscription: ReturnType<typeof Track.subscribe>
+
+  started = false;
+
   start() {
-    this.execute();
+    if (this.started) return;
+    this.started = true;
 
-    this.subscription = Selector.onUpstreamInvalidation(this, () => {
-      if (Reaction.preventInifiniteLoop.has(this)) {
-        return;
-      }
+    Track.subscribe(this, () => {
+      if (Reaction.runningEffect.has(this)) return;
+      this.execute();
+    })
 
+    Track.attributeChanges(this, () => {
       this.execute();
     });
   }
 
-  execute() {
-    Reaction.current = this;
+  restart() {
+    this.stop();
+    this.start();
+  }
+
+  private execute() {
+    Track.dispose(this);
     this.get();
+  }
+
+  forceRun() {
+    return Selector.runRaw(this);
   }
 
   dispose() {
@@ -34,13 +50,16 @@ export class Reaction extends Selector<ReactionCallback> {
   }
 
   stop() {
+    this.started = false
     this.dispose();
   }
+}
 
-  static effect(callback: () => void) {
-    const reaction = Reaction.current!;
-    Reaction.preventInifiniteLoop.add(reaction);
+
+class ReactionContext extends SelectorContext {
+  effect(callback: () => void) {
+    Reaction.runningEffect.add(this.selector);
     callback();
-    Reaction.preventInifiniteLoop.delete(reaction);
+    Reaction.runningEffect.delete(this.selector);
   }
 }

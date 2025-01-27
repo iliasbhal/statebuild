@@ -36,26 +36,26 @@ const useRegisterListener = <T extends Entity>(entity: T) => {
 
   // Reset & Setup listener to detect usage
   ref.disposed = false;
-  const listener = Entity.regsiterGlobalListener(entity, (parent, key) => {
-    if (!ref.current.has(parent)) {
-      ref.current.set(parent, new Set());
-    }
+  // const listener = Entity.regsiterGlobalListener(entity, (parent, key) => {
+  //   if (!ref.current.has(parent)) {
+  //     ref.current.set(parent, new Set());
+  //   }
 
-    ref.current.get(parent).add(key);
-  });
+  //   ref.current.get(parent).add(key);
+  // });
 
 
   const dispose = React.useCallback(() => {
     if (ref.disposed) return;
 
-    listener.unregister();
+    // listener.unregister();
     ref.final = ref.current;
     ref.current = new Map();
     ref.disposed = true;
   }, []);
 
   return {
-    listener,
+    // listener,
     dispose,
     getUsedProps: () => {
       return Array.from(ref.final);
@@ -86,3 +86,6 @@ const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
 
   return makeDisposable(entity, () => register.dispose());
 }
+
+
+

@@ -2,7 +2,6 @@ import { State, } from '../';
 import { Reaction } from '../Reaction';
 
 describe('Reaction', () => {
-  jest.useFakeTimers({ legacyFakeTimers: true });
 
   it('it run when defined', () => {
     const atom = State.from(true);
@@ -25,7 +24,10 @@ describe('Reaction', () => {
     reactionSpy.mockClear();
 
     atom.set(false);
-    jest.runOnlyPendingTimers();
+    expect(reactionSpy).toHaveBeenCalledTimes(1);
+    reactionSpy.mockClear();
+
+    atom.set(true);
     expect(reactionSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -40,17 +42,15 @@ describe('Reaction', () => {
     reaction.stop()
 
     atom.set(false);
-    jest.runOnlyPendingTimers();
     expect(reactionSpy).not.toHaveBeenCalled();
 
     atom.set(true);
-    jest.runOnlyPendingTimers();
     expect(reactionSpy).not.toHaveBeenCalled();
 
     reaction.stop()
   })
 
-  it('can restart triggering reaction', async () => {
+  it('can stop and restart triggering reaction', async () => {
     const atom = State.from(true);
     const reactionSpy = jest.fn().mockImplementation(() => {
       atom.get();
@@ -82,19 +82,22 @@ describe('Reaction', () => {
   it('side effect can de defined in an .effect callback that won\'t trigger reactions', () => {
 
     const atom = State.from(1);
-    const reactionSpy = jest.fn().mockImplementation(() => {
+
+    const reactionSpy = jest.fn().mockImplementation((ctx) => {
       const prev = atom.get();
-      Reaction.effect(() => {
+      ctx.effect(() => {
         atom.set(prev + 1);
       });
     });
 
+
     State.reaction(reactionSpy);    
+
     expect(reactionSpy).toHaveBeenCalledTimes(1);
     expect(atom.get()).toBe(2);
     reactionSpy.mockClear();
-
     atom.set(10);
+
     expect(reactionSpy).toHaveBeenCalledTimes(1);
     expect(atom.get()).toBe(11);
   })
@@ -103,12 +106,12 @@ describe('Reaction', () => {
 
     const atom = State.from(1);
     const reactionSpy = jest.fn().mockImplementation(() => {
+      reactionSpy();
       const prev = atom.get();
       atom.set(prev + 1);
     });
 
-    State.reaction(reactionSpy)
-    expect(() => atom.set(10))
+    expect(() => State.reaction(reactionSpy))
       .toThrowError('Maximum call stack size exceeded')
   })
 

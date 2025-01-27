@@ -1,37 +1,11 @@
 import { EventBus } from "../../utils/EventBus";
-
-type PropVisitor = (target: object, prop: string | symbol) => void;
+import { Track } from "../Track";
 
 export class Entity {
   static changes = new EventBus<Entity>();
   static subscribe(obj: object, callback: any) {
     const orignal = Entity.getBaseObject(obj);
     return Entity.changes.subscribe(orignal, callback);
-  }
-
-  static globalRegistrationStack: Entity[] = [];
-  static globalVistorByBase = new WeakMap<Entity, PropVisitor>();
-  static regsiterGlobalListener(base: Entity, visitor: PropVisitor) {
-    Entity.globalRegistrationStack.push(base);
-    Entity.globalVistorByBase.set(base, visitor);
-
-    return {
-      unregister() {
-        const idx = Entity.globalRegistrationStack.indexOf(base);
-        Entity.globalRegistrationStack.splice(idx, 1);
-        Entity.globalVistorByBase.delete(base);
-      },
-    };
-  }
-
-  static getPeekVisitor() {
-    const lastKey =
-      Entity.globalRegistrationStack[Entity.globalRegistrationStack.length - 1];
-    if (lastKey) {
-      return Entity.globalVistorByBase.get(lastKey);
-    }
-
-    return null;
   }
 
   static originalObjectByProxy = new WeakMap<object>();
@@ -65,18 +39,15 @@ export class Entity {
     const proxy = new Proxy(base, {
       get(target, prop, receiver) {
         const value = Reflect.get(target, prop, receiver);
+        const isFunction = typeof value == "function";
 
-        if (typeof value !== "function") {
-          const visit = Entity.getPeekVisitor();
-          if (visit) {
-            // console.log('VISIT', base, prop);
-            visit(base, prop);
-          }
+        if (!isFunction) {
+          Track.visit(base, prop)
         }
 
         if (base instanceof Set || base instanceof Map) {
           if (typeof value === 'function') {
-            return pathMapSetMethod(base, prop, value);
+            return patchMapSetMethods(base, prop, value);
           }
         }
 
@@ -88,14 +59,12 @@ export class Entity {
           prop,
           newValue,
         );
-        if (shouldWrapWithProxy) {
-          const proxyValue = Entity.wrap(newValue);
-          const returnValue = Reflect.set(target, prop, proxyValue, receiver);
-          Entity.changes.publish(base, prop);
-          return returnValue;
-        }
 
-        const returnValue = Reflect.set(target, prop, newValue, receiver);
+        const nextValue = shouldWrapWithProxy
+          ? Entity.wrap(newValue)
+          : newValue;
+
+        const returnValue = Reflect.set(target, prop, nextValue, receiver);
         Entity.changes.publish(base, prop);
         return returnValue;
       },
@@ -111,7 +80,7 @@ export class Entity {
 }
 
 
-const pathMapSetMethod = (base: Set<any> | Map<any, any>, prop, method) => {
+const patchMapSetMethods = (base: Set<any> | Map<any, any>, prop, method) => {
 
   // Methods that can update the content of the Set/Map
   if (prop === 'add' || prop === 'delete' || prop === 'clear') {
@@ -157,13 +126,10 @@ const pathMapSetMethod = (base: Set<any> | Map<any, any>, prop, method) => {
 
   // Methods that read the content
   if (prop === 'has' || prop === 'get') {
-    const visit = Entity.getPeekVisitor();
-    if (visit) {
-      return function (...args) {
-        visit(base, args[0]);
-        return Reflect.apply(method, base, args);
-      };
-    }
+    return function (...args) {
+      Track.visit(base, args[0]);
+      return Reflect.apply(method, base, args);
+    };
   }
 
   return method.bind(base);

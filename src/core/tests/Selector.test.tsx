@@ -1,16 +1,30 @@
 import wait from "wait";
 import { Entity, Selector, State } from "..";
+import { Track } from "../Track";
 
 describe("Selector", () => {
-  it("can create a selector with other atoms", () => {
+  it("can create a selector with other atoms", async () => {
     const count = State.from(3);
-    const double = State.select(() => count.get() * 2);
+    const double = State.select(() => {
+      return count.get() * 2
+    });
 
     expect(double.get()).toBe(6);
   });
 
+  it('should not recompute selector if atom has not changed', () => {
+    const selector = jest.fn().mockImplementation(() => 3 * 2);
+    const double = State.select(selector);
+    expect(double.get()).toBe(6);
+    expect(double.get()).toBe(6);
+    expect(double.get()).toBe(6);
+
+    expect(selector).toHaveBeenCalledTimes(1);
+  })
+
   it("throws if trying to manualy set set value", () => {
     const count = State.from(3);
+    
     const double = State.select(() => count.get() * 2);
 
     expect(() => (double as any).set(3)).toThrow("Selector is read only");
@@ -48,17 +62,26 @@ describe("Selector", () => {
 
   it("doesn't recompute selector if atom hasn't changed", () => {
     const count = State.from(3);
-    const selector = jest.fn().mockImplementation(() => count.get() * 2);
-    const double = State.select(selector);
+    const selector = jest.fn()
+    const double = State.select(() => {
+      selector();
+      return count.get() * 2
+    });
 
     expect(selector).not.toHaveBeenCalled();
 
-    double.get();
+    const value = double.get()
+
+
+    expect(value).toBe(6);
+    expect(selector).toHaveBeenCalledTimes(1);
+    selector.mockClear();
+
     double.get();
     double.get();
 
     expect(double.get()).toBe(6);
-    expect(selector).toHaveBeenCalledTimes(1);
+    expect(selector).toHaveBeenCalledTimes(0);
     selector.mockClear();
 
     count.set(4);
@@ -328,7 +351,7 @@ describe("Selector", () => {
     expect(selectorSpy).not.toHaveBeenCalled();
   });
 
-  it.skip('should dependency tree when dependency is not active anymore', async () => {
+  it.only('should clean dependency tree when dependency is not active anymore', async () => {
     const atom = State.from(1);
     const atom2 = State.from(1000);
 
@@ -345,13 +368,20 @@ describe("Selector", () => {
     });
     
     await expect(doubleAsync.get()).resolves.toBe(1000);
+    expect(Track.getDependencies(atom).size).toBe(1);
+    expect(Track.getDependencies(atom2).size).toBe(1);
+    expect(Track.getDependents(doubleAsync).size).toBe(2);
+
+
     atom.set(2);
+    expect(Track.getDependencies(atom).size).toBe(1);
+    expect(Track.getDependencies(atom2).size).toBe(0);
+    expect(Track.getDependents(doubleAsync).size).toBe(1);
+
+
     await expect(doubleAsync.get()).resolves.toBe(2);
     atom2.set(3);
 
-    expect(Selector.tree.getDependencies(Entity.getBaseObject(atom)).size).toBe(1);
-    expect(Selector.tree.getDependencies(Entity.getBaseObject(atom2)).size).toBe(0);
-    expect(Selector.tree.getDependents(Entity.getBaseObject(doubleAsync)).size).toBe(1);
   })
 
   it('should accept generators as selectors for async-like', async () => {
@@ -362,7 +392,13 @@ describe("Selector", () => {
     const doubleAsync = State.select(function* (ctx) {
       selectorSpy();
       const value = atom.get();
+
+      const now = Date.now();
       yield wait(200);
+
+      const after = Date.now();
+      const timeSpent = after - now;  
+      expect(timeSpent).toBeGreaterThanOrEqual(200);
 
 
       const multiplyWith = atom2.get();
@@ -387,60 +423,172 @@ describe("Selector", () => {
     expect(selectorSpy).not.toHaveBeenCalled();
   });
 
-
-  it.only("should register dependencies of async selector (when dependencies are NOT defined in the same sync event loop)", async () => {
-    const atom = State.from(3);
-    const atom2 = State.from(2);
+  it("should resolve with promise for async selector", async () => {
     const selectorSpy = jest.fn();
 
-    const double1 = State.select('Double',async () => {
-      // console.log('Double1 context', AsyncContext.get().id)
-      await wait(200);
-
-      // console.log('Double1 context 2', AsyncContext.get().id)
-      return atom.get() * 2;
-    });
-
-    const double2 = State.select(async () => {
-      await wait(100);
-      return atom2.get() * 2;
-    })
-
-    const total = State.select('Total',async (ctx) => {
-      // console.log('Total context', AsyncContext.get().id)
+    const doubleAsync = State.select('Double', async () => {
       selectorSpy();
-      const value = atom.get();
       await wait(200);
-
-      // console.log('Total context 2', AsyncContext.get().id)
-      const add1 = await double1.get();
-
-      // console.log('Total context 3', AsyncContext.get().id)
-      // const add2 = await atom2.get();
-      // const add3 = await double2.get();
-
-      // console.log('AsyncContext.get() 4', AsyncContext.get())
-      return value + add1;
-      // console.log('multiplyWith', value, add1, add2, add3);
-      // return value + add1 + add2 + add3;
+      return 6;
     });
 
-    await total.get();
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
 
-    // await expect(total.get()).resolves.toBe(15);
-    // expect(selectorSpy).toHaveBeenCalledTimes(1);
-    // selectorSpy.mockClear();
 
-    // await expect(total.get()).resolves.toBe(15);
-    // expect(selectorSpy).not.toHaveBeenCalled();
+  })
 
-    // atom2.set(10);
-    // await expect(total.get()).resolves.toBe(9);
-    // await expect(total.get()).resolves.toBe(9);
-    // expect(selectorSpy).toHaveBeenCalledTimes(1);
-    // selectorSpy.mockClear();
+  it("should register dependencies of async selector", async () => {
+    const atom = State.from(3);
+    const selectorSpy = jest.fn();
 
-    // await expect(doubleAsync.get()).resolves.toBe(9);
-    // expect(selectorSpy).not.toHaveBeenCalled();
+    const doubleAsync = State.select('Double', async () => {
+      selectorSpy();
+      await wait(200);
+      const value = atom.get() * 2;
+      return value;
+    });
+
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    await expect(doubleAsync.get()).resolves.toBe(6);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
+
+    atom.set(10);
+
+    await expect(doubleAsync.get()).resolves.toBe(20);
+    await expect(doubleAsync.get()).resolves.toBe(20);
+    expect(selectorSpy).toHaveBeenCalledTimes(1);
+    selectorSpy.mockClear();
+
+
+  })
+
+  it("should register dependencies of async selector 2", async () => {
+    const atom = State.from(3);
+
+    const passthrough = State.select('Double', async () => {
+      await wait(100);
+      return atom.get();
+    });
+    
+    const totalSpy = jest.fn();
+    const total = State.select('Total', async () => {
+      totalSpy();
+      await wait(100);
+      const value = await passthrough.get() * 2;
+      // const value = await atom.get() * 2;
+      return value;
+    });
+
+    const totalSpy2 = jest.fn();
+    const atom2 = State.from(2);
+    const total2 = State.select('Total2', async () => {
+      totalSpy2();
+      await wait(100);
+      const value = await atom2.get();
+      return value;
+    });
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(6),
+      expect(total.get()).resolves.toBe(6),
+      expect(total2.get()).resolves.toBe(2),
+      expect(total2.get()).resolves.toBe(2),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(1);
+    expect(totalSpy2).toHaveBeenCalledTimes(1);
+    totalSpy.mockClear();
+    totalSpy2.mockClear();
+
+    atom.set(10);
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(20),
+      expect(total.get()).resolves.toBe(20),
+      expect(total2.get()).resolves.toBe(2),
+      expect(total2.get()).resolves.toBe(2),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(1);
+    expect(totalSpy2).toHaveBeenCalledTimes(0);
+    totalSpy.mockClear();
+    totalSpy2.mockClear();
+
+    atom2.set(10);
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(20),
+      expect(total.get()).resolves.toBe(20),
+      expect(total2.get()).resolves.toBe(10),
+      expect(total2.get()).resolves.toBe(10),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(0);
+    expect(totalSpy2).toHaveBeenCalledTimes(1);
+    totalSpy.mockClear();
+    totalSpy2.mockClear();
+
+
+  });
+
+  it("should register dependencies of async selector 3", async () => {
+    const atom = State.from(3);
+    const atom2 = State.from(2);
+
+    const passthroughSpy = jest.fn();
+    const passthrough = State.select('Double', async () => {
+      passthroughSpy();
+      await wait(100);
+      const value = atom.get();
+
+      return value;
+    });
+    
+    const totalSpy = jest.fn();
+    const total = State.select('Total', async () => {
+      totalSpy();
+      await wait(100);
+      const value = await passthrough.get() * 2;;
+      const atom2value = await atom2.get();
+      return value + atom2value;
+    });
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(8),
+      expect(total.get()).resolves.toBe(8),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(1);
+    expect(passthroughSpy).toHaveBeenCalledTimes(1);
+    totalSpy.mockClear();
+    passthroughSpy.mockClear();
+
+    atom2.set(14);
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(20),
+      expect(total.get()).resolves.toBe(20),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(1);
+    expect(passthroughSpy).toHaveBeenCalledTimes(0);
+    totalSpy.mockClear();
+    passthroughSpy.mockClear();
+
+    atom.set(10);
+
+    await Promise.all([
+      expect(total.get()).resolves.toBe(34),
+      expect(total.get()).resolves.toBe(34),
+    ]);
+
+    expect(totalSpy).toHaveBeenCalledTimes(1);
+    expect(passthroughSpy).toHaveBeenCalledTimes(1);
+    totalSpy.mockClear();
+    passthroughSpy.mockClear();
   });
 });

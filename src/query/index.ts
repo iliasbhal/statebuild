@@ -1,5 +1,6 @@
 import { QueryClient, QueryObserver, UseQueryOptions, QueryObserverResult } from '@tanstack/react-query';
 import { Atom, Selector } from '../';
+import { Track } from '../core/Track';
 
 
 type SelectorConfig = { client: QueryClient };
@@ -38,7 +39,7 @@ export class QuerySelector<Result> extends Selector<() => Result> {
       })
     );
 
-    Selector.onActivityChanged(this, (isActive) => {
+    Track.onActivityChanged(this, (isActive) => {
       if (!isActive) {
         this.stop();
       }

@@ -37,7 +37,9 @@
     "playground": "bun run --watch  ./scripts/playground.ts"
   },
   "peerDependencies": {},
-  "dependencies": {},
+  "dependencies": {
+    "simple-async-context": "^1.0.3"
+  },
   "devDependencies": {
     "@babel/cli": "^7.19.3",
     "@babel/core": "^7.23.9",

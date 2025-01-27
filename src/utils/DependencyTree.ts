@@ -13,6 +13,10 @@ export class DependencyTree {
   invalidations = new EventBus<Disposable>();
   activityChanged = new EventBus<any>('activityChanged');
 
+  add(origin: any) {
+    this.items.add(origin);
+  }
+
   register(origin: any, dependency: any) {
     const isDifferent = dependency !== origin;
     if (!isDifferent) {
@@ -20,6 +24,7 @@ export class DependencyTree {
       return;
     }
 
+    // console.log('REGISTER', origin, dependency)
     this.items.add(origin);
     this.addDependency(origin, dependency);
     this.addDependent(origin, dependency);
@@ -51,6 +56,7 @@ export class DependencyTree {
     // Also throw if there are things that have origin as a dependency.
     const dependents = this.dependents.get(origin);
     if (dependents?.size > 0) {
+      console.log(dependents)
       throw new Error('Cannot remove origin as it is a dependency of other items');
     }
 
@@ -77,9 +83,10 @@ export class DependencyTree {
       return;
     }
 
-    this.autoClearCache.add(origin);
+    // console.log('invalidate', origin)
 
     this.items.delete(origin);
+    this.autoClearCache.add(origin);
     this.invalidations.publish(origin);
 
     const dependencies = this.getDependencies(origin);

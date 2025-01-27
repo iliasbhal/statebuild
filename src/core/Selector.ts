@@ -1,6 +1,6 @@
-import { Atom } from "./Atom";
 import { Entity } from './base/Entity';
-import { DependencyTree } from '../utils/DependencyTree';
+import { Atom } from "./Atom";
+import { Track } from './Track';
 
 export type SelectorCallback = (ctx: SelectorContext) => any;
 export type SelectorAsyncCallback = (...args: any) => Promise<any>;
@@ -8,7 +8,6 @@ export type SelectorAsyncCallback = (...args: any) => Promise<any>;
 export const STATEBUILD_RAW_FLAG = '__STATEBUILD_RAW__';
 
 export class Selector<Fn extends SelectorCallback, ID extends string = string> extends Atom<ReturnType<Fn>> {
-  static tree = new DependencyTree();
   static disposableRessources = new WeakMap<Selector<any>, { dispose: Function }[]>();
 
   selectorFn: Fn;
@@ -33,119 +32,28 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     return callableAtom;
   }
 
-  static onUpstreamInvalidation(selector: Selector<any>, callback: () => void) {
-    const dependencyKey = Entity.getBaseObject(selector);
-    const subscription = Selector.tree.invalidations.subscribe(dependencyKey, callback)
-
-    return subscription;
-  }
-
-  static disposeRelatedRessources(selector: Selector<any>) {
-    const core = Entity.getBaseObject(selector);
-    const disposableRessources = Selector.disposableRessources.get(core);
-    if (disposableRessources) {
-      disposableRessources.forEach((ressource) => ressource.dispose());
+  static runRaw(selector: Selector<any>) {
+    const isGenerator = Generator.isGeneratorFunction(selector.selectorFn);
+    const value = selector.selectorFn(selector.context);
+    if (isGenerator) {
+      return Generator.execute(value);
     }
 
-    Selector.disposableRessources.delete(core)
+    return value;
   }
 
-  static getOrCreateDisposableRessources(selector: Selector<any>) {
-    const core = Entity.getBaseObject(selector);
-
-    const disposableRessources = Selector.disposableRessources.get(core);
-    if (disposableRessources) {
-      return disposableRessources;
-    }
-
-    const ressources = [];
-    Selector.disposableRessources.set(core, ressources);
-    return ressources;
-  }
-
-  static autoRegisterSelectorDependencies(selector: Selector<any>) {
-    const core = Entity.getBaseObject(selector);
-    Selector.disposeRelatedRessources(selector);
-    const ressources = Selector.getOrCreateDisposableRessources(selector);
-
-    const registration = Entity.regsiterGlobalListener(core, (parent, prop) => {
-      const isSelector = parent === selector;
-      if (isSelector) return;
-      // Ensure that get notify when one a dependency is updated
-      // In that case we'll need to invalidate this and downstream selectors
-
-      let previousValue = parent[prop];
-      const propSub = Entity.subscribe(parent, (updatedProp) => {
-        const isTrackedProp = updatedProp === prop;
-        if (!isTrackedProp) return;
-
-        const nextValue = parent[updatedProp];
-        const hasChanged = previousValue !== nextValue;
-        if (hasChanged) {
-          core.invalidate(true);
-          previousValue = nextValue;
-        }
-      });
-
-      ressources.push({ dispose: () => propSub.unsubscribe() });
-      core.addDependency(parent);
-    })
-
-    return {
-      unregister: () => {
-        registration.unregister();
-      }
-    };
-  }
-
-  static getDependencies(selector: Selector<any>) {
-    const core = Entity.getBaseObject(selector);
-    return Selector.tree.getDependencies(core);
-  }
-
-  static onActivityChanged(selector: Selector<any>, handler: (isActive: boolean) => void) {
-    const core = Entity.getBaseObject(selector);
-    return Selector.tree.activityChanged.subscribe(core, handler);
-  }
-
-  addDependency(dependency: object) {
-    const dependent = Entity.getBaseObject(dependency);
-    const parent = Entity.getBaseObject(this);
-    return Selector.tree.register(parent, dependent);
-  }
-
-  private invalidate(force: boolean = false) {
-    const origin = Entity.getBaseObject(this);
-    return Selector.tree.invalidate(origin, force);
-  }
-
-  static runSelectorFn(selector: Selector<any>) {
+  static runWithTracking(selector: Selector<any>) {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
+    const selectedValue = Track.attributeChanges(selector, () => {
+      return Selector.runRaw(selector);
+    })
 
-    const isGenerator = Generator.isGeneratorFunction(selector.selectorFn);
-    if (isGenerator) {
-      const registration = Selector.autoRegisterSelectorDependencies(selector);
-      const result = Generator.execute(selector.selectorFn, [selector.context], (executeStep) => {
-        const registration = Selector.autoRegisterSelectorDependencies(selector);
-        executeStep();
-        registration.unregister();
-      });
-
-      registration.unregister();
-      return result;
-    }
-
-    const registration = Selector.autoRegisterSelectorDependencies(selector)
-    const selectedValue = selector.selectorFn(selector.context);
-    registration.unregister();
     return selectedValue;
   }
 
   dispose() {
-    const base = Entity.getBaseObject(this);
-    Selector.disposeRelatedRessources(this);
-    Selector.tree.remove(base);
+    Track.remove(this);
     Entity.dispose(this);
   }
 
@@ -155,13 +63,23 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
       throw new Error('Selector does not accept arguments');
     }
 
-    const core = Entity.getBaseObject(this);
-    const hasCachedValue = Selector.tree.has(core);
+    const hasCachedValue = Track.isTracked(this)
     if (!hasCachedValue) {
-      const selectedValue = Selector.runSelectorFn(this)
+      const selectedValue = Selector.runWithTracking(this)
       super.set(selectedValue);
+
+      const isTracked = Track.isTracked(this)
+      if (!isTracked) {
+        // Selector doesn't have any dependencies
+        // we'll add it to the registery to that the selector can concider 
+        // that its value is in cache.
+        // Note, the selector will never rerrun since it doesn't have dependencies
+        // That may invalidate it.
+        Track.add(this);
+      }
     }
 
+    // console.log('dependencies', Track.getDependencies(this), Track.getDependents(this));
     const value = super.get();
     return value;
   }
@@ -189,10 +107,9 @@ export class SelectorContext {
     //   return atom.get();
     // }
 
-    const registration = Selector.autoRegisterSelectorDependencies(this.selector);
-    const value = atom.get();
-    registration.unregister();
-    return value;
+    return Track.attributeChanges(this.selector, () => {
+      return atom.get();
+    })
   }
 }
 
@@ -203,15 +120,16 @@ export class Generator {
     return isGenerator;
   }
 
-  static execute(generatorFn, args: any, step) {
-    const generator = generatorFn(...args);
+  static execute(generator: Generator, step?: Function) {
+    // const generator = generatorFn(...args);
+    const executeStep = step ? step : (callback: Function) => callback()
 
     return new Promise(function (resolve, reject) {
       const generatorStep = (key, arg) => {
         try {
           let info = null
 
-          step(() => {
+          executeStep(() => {
             info = generator[key](arg)
           });
 

@@ -1,22 +1,12 @@
 import React from 'react';
 import { useSelector } from './hooks';
-import { Atom, SelectorCallback, State as StateOG } from '../core';
+import { Atom, Selector, Reaction, SelectorCallback, State as StateOG } from '../core';
 
 export * from './hooks';
 
 const STATEBUILD_UI_FLAG = '__STATEBUILD_UI__';
 
-export const enableAutoRendering = () => {
-  const reactCreateElement = React.createElement
-  React.createElement = (name, props, ...children) => {
-    const isRenderableEntity = name[STATEBUILD_UI_FLAG];
-    if (isRenderableEntity) {
-      return name[STATEBUILD_UI_FLAG];
-    }
-
-    return reactCreateElement(name, props, ...children);
-  }
-}
+const originalCreateElement = React.createElement;
 
 export class State extends StateOG {
   static from<Fn>(selectorFn: Fn): ReturnType<typeof State.makeRenderable<any, ReturnType<typeof StateOG.from<Fn>>>>;
@@ -32,12 +22,18 @@ export class State extends StateOG {
     return State.makeRenderable(atom);
   }
 
+
   protected static makeRenderable<U, A extends Atom<U>>(atom: A) : A {
-    const AtomUI = State.toReactComponent(atom);
-    return Object.assign(atom, AtomUI, { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {})
+    const AtomUI = State.atomToComponent(atom);
+    return Object.assign(
+      atom, 
+      AtomUI,
+      { render: () => originalCreateElement(AtomUI) },
+      { [STATEBUILD_UI_FLAG]: <AtomUI /> } as {}
+    )
   }
 
-  public static toReactComponent = <A extends Atom<any>>(atom: A) => {
+  protected static atomToComponent = <A extends Atom<any>>(atom: A) => {
     const StateBuildAutoUI = React.memo(() => {
       const selector = React.useMemo(() => StateOG.select(() => atom.get()), []);
       const value = useSelector(selector);
@@ -50,4 +46,81 @@ export class State extends StateOG {
 
     return StateBuildAutoUI;
   }
+
+  static wrappedByOriginal = new WeakMap()
+  static wrapToAutoRerender = (component) => {
+    const wrapped = this.wrappedByOriginal.get(component)
+    if (wrapped) return wrapped;
+
+    const data = {
+      component: null,
+      render: 0,
+      props: {},
+      skip: false,
+    };
+
+    const wrapped2 = (props) => {
+      data.props = props;
+
+      const[ _, rerender] = React.useState();
+      const [reaction] = React.useState<Reaction>(() => {
+        return new Reaction(() => {
+          data.component = component(data.props)
+          data.render += 1
+
+          if (data.render >= 2) {
+            data.skip = true;
+            rerender({});
+          }
+        });
+      })
+
+      if (!data.skip) {
+        data.render = 0;
+        reaction.restart();
+      } else {
+        data.skip = false;
+      }
+
+      React.useEffect(() => {
+        return () => {
+          reaction.dispose();
+        };
+      },[]);
+
+      return data.component;
+    };
+
+    this.wrappedByOriginal.set(component, wrapped2);
+    return wrapped2;
+  }
+
+  static enableAutoRendering = () => {
+    const originalCreateElement = React.createElement;
+
+    React.createElement = (component, props, ...children) => {
+
+      const patchedChildren = children.map((child) => {
+        const isRenderableEntity = child[STATEBUILD_UI_FLAG];
+        if (isRenderableEntity) {
+          return child[STATEBUILD_UI_FLAG];
+        }
+
+        return child;
+      })
+
+      const isRenderableEntity = component[STATEBUILD_UI_FLAG];
+      if (isRenderableEntity) {
+        return component[STATEBUILD_UI_FLAG];
+      }
+
+      if (typeof component !== 'function' || component['$$typeof']) {
+        return originalCreateElement(component, props, ...patchedChildren);
+      }
+
+      const autoRerenderComp = State.wrapToAutoRerender(component);
+      return originalCreateElement(autoRerenderComp, props, ...patchedChildren);
+    }
+  };
+
 }
