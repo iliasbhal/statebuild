@@ -86,10 +86,10 @@ describe('Entity', () => {
     });
   })
 
-  it.skip('should not keep a reference on items after dipose', () => {
-    const worker = new Worker();
-    Entity.dispose(worker);
-  })
+  // it.skip('should not keep a reference on items after dipose', () => {
+  //   const worker = new Worker();
+  //   Entity.dispose(worker);
+  // })
 })
 
 describe('Entity Map/Set', () => {

@@ -45,6 +45,9 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   static runWithTracking(selector: Selector<any>) {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
+
+    // console.log('run with Tracking') 
+    Track.remove(selector);
     const selectedValue = Track.attributeChanges(selector, () => {
       return Selector.runRaw(selector);
     })
@@ -55,6 +58,12 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
   dispose() {
     Track.remove(this);
     Entity.dispose(this);
+  }
+
+  onInvalidate(callback: Function) {
+    return Track.subscribe(this, () => {
+      callback();
+    })
   }
 
   select(...args: unknown[]) {

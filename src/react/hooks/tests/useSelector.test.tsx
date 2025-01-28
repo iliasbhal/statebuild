@@ -1,7 +1,6 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
 import { State, useSelector } from '../..';
-import { STATEBUILD_RAW_FLAG } from '../../../core';
 
 describe('useSelector', () => {
   it('should return selector value', () => {

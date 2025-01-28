@@ -1,6 +1,8 @@
 import React from 'react';
 import { useSelector } from './hooks';
 import { Atom, Selector, Reaction, SelectorCallback, State as StateOG } from '../core';
+import { unsubscribe } from 'diagnostics_channel';
+import { Track } from '../core/Track';
 
 export * from './hooks';
 
@@ -52,43 +54,27 @@ export class State extends StateOG {
     const wrapped = this.wrappedByOriginal.get(component)
     if (wrapped) return wrapped;
 
-    const data = {
-      component: null,
-      render: 0,
-      props: {},
-      skip: false,
-    };
-
     const wrapped2 = (props) => {
-      data.props = props;
-
       const[ _, rerender] = React.useState();
-      const [reaction] = React.useState<Reaction>(() => {
-        return new Reaction(() => {
-          data.component = component(data.props)
-          data.render += 1
 
-          if (data.render >= 2) {
-            data.skip = true;
-            rerender({});
-          }
-        });
+      const selector = new Selector(() => {
+        return component(props);
       })
 
-      if (!data.skip) {
-        data.render = 0;
-        reaction.restart();
-      } else {
-        data.skip = false;
-      }
+      const rendered = selector.get()
 
       React.useEffect(() => {
+        const sub = Track.subscribe(selector, () => {
+          rerender({});
+        })
+   
         return () => {
-          reaction.dispose();
+          sub.unsubscribe();
+          selector.dispose();
         };
-      },[]);
+      });
 
-      return data.component;
+      return rendered;
     };
 
     this.wrappedByOriginal.set(component, wrapped2);

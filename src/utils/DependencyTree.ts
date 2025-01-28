@@ -7,8 +7,8 @@ export interface Disposable {
 export class DependencyTree {
   items = new Set<Disposable>();
 
-  dependents = new Map<Disposable, Set<Disposable>>();
-  dependencies = new Map<Disposable, Set<Disposable>>();
+  dependents = new WeakMap<Disposable, Set<Disposable>>();
+  dependencies = new WeakMap<Disposable, Set<Disposable>>();
 
   invalidations = new EventBus<Disposable>();
   activityChanged = new EventBus<any>('activityChanged');
@@ -24,6 +24,7 @@ export class DependencyTree {
       return;
     }
 
+    // console.log('register,', origin, dependency)
     // console.log('REGISTER', origin, dependency)
     this.items.add(origin);
     this.addDependency(origin, dependency);
@@ -53,6 +54,10 @@ export class DependencyTree {
   }
 
   remove(origin: any) {
+    // console.log('remove', origin, {
+    //   dependents: this.dependents.get(origin)?.size,
+    //   dependencies: this.dependencies.get(origin)?.size
+    // })
     // Also throw if there are things that have origin as a dependency.
     const dependents = this.dependents.get(origin);
     if (dependents?.size > 0) {
@@ -63,6 +68,7 @@ export class DependencyTree {
     // Remove origin from all its dependencies
     // So that the dependencies will list origin as a dependency
     const dependencies = this.dependencies.get(origin);
+
     dependencies?.forEach(dependency => {
       const dependencies = this.dependents.get(dependency);
       dependencies?.delete(origin);
@@ -79,6 +85,7 @@ export class DependencyTree {
 
   autoClearCache = new AutoClearCache();
   invalidate(origin: any, force: boolean = false) {
+    // console.log('invalidate origin', force, origin);
     if (!force && this.autoClearCache.has(origin)) {
       return;
     }

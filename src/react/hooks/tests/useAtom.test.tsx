@@ -90,8 +90,6 @@ describe('useAtom', () => {
     expect(rerenderSpy).toHaveBeenCalledTimes(1);
     rerenderSpy.mockClear();
 
-
-    console.log('-----')
     React.act(() => {
       container.click();
     })
@@ -177,8 +175,11 @@ describe('useAtom', () => {
       sharedAtom.set(6);
     })
 
-    expect(rerenderSpy1).toHaveBeenCalledTimes(3);
-    expect(rerenderSpy2).toHaveBeenCalledTimes(3);
+    // wrapper.debug();
+
+    // should render only once because React batch rerender calls
+    expect(rerenderSpy1).toHaveBeenCalledTimes(1);
+    expect(rerenderSpy2).toHaveBeenCalledTimes(1);
 
     rerenderSpy1.mockClear();
     rerenderSpy2.mockClear();
@@ -189,7 +190,9 @@ describe('useAtom', () => {
       notSharedAtom.set(6);
     })
 
+    // wrapper.debug();
+
     expect(rerenderSpy1).not.toHaveBeenCalled();
-    expect(rerenderSpy2).toHaveBeenCalledTimes(3);
+    expect(rerenderSpy2).toHaveBeenCalledTimes(1);
   })
 })

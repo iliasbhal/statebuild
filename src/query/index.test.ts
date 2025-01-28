@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { QuerySelector } from './index';
-import { State } from '../';
+import { State } from '..';
 import wait from 'wait';
 
 export const queryClient = new QueryClient({
@@ -94,9 +94,9 @@ describe.skip('Query', () => {
     reaction.stop();
   })
 
-  it.skip('should rerun when a dependency in the queryFn changes', () => {
-    throw new Error('Not implemented')
-  });
+  // it.skip('should rerun when a dependency in the queryFn changes', () => {
+  //   throw new Error('Not implemented')
+  // });
 
   it('should stop the query when no longer in use', async () => {
     const querySpy = jest.fn();

@@ -30,8 +30,6 @@ describe('React', () => {
     expect(renderSpy).toHaveBeenCalledTimes(0);
   });
 
-  console.error = () => {};
-
   it('can render atom by placing it in the render brackets', async () => {
     const atom = State.from(1);
     const renderSpy = jest.fn();
@@ -122,5 +120,41 @@ describe('React', () => {
     expect(renderSpy).toHaveBeenCalledTimes(1);
   })
 
+  it('rerenders with a hooks initiate the rerender', () => {
+
+    const atom = State.from(3);
+    const rerenderSpy = jest.fn();
+    const Wrapper = () => {
+      const [state, setState] = React.useState(0);
+      rerenderSpy();
+      return (
+        <div data-testid="container" onClick={() => setState((prev => prev + 1))}>
+          {atom.get() + 1}:{state}
+        </div>
+      )
+    }
+
+    const wrapper = testingLib.render(<Wrapper />);
+    const container = wrapper.getByTestId('container');
+    expect(container).toHaveTextContent('4:0');
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+
+
+    React.act(() => {
+      container.click();
+    })
+
+    expect(container).toHaveTextContent('4:1');
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+    rerenderSpy.mockClear();
+
+    React.act(() => {
+      atom.set(4);
+    })
+
+    expect(container).toHaveTextContent('5:1');
+    expect(rerenderSpy).toHaveBeenCalledTimes(1);
+  });
 
 })

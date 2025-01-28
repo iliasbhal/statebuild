@@ -1,5 +1,5 @@
 import wait from "wait";
-import { Entity, Selector, State } from "..";
+import { State } from "..";
 import { Track } from "../Track";
 
 describe("Selector", () => {
@@ -351,7 +351,7 @@ describe("Selector", () => {
     expect(selectorSpy).not.toHaveBeenCalled();
   });
 
-  it.only('should clean dependency tree when dependency is not active anymore', async () => {
+  it('should clean dependency tree when dependency is not active anymore', async () => {
     const atom = State.from(1);
     const atom2 = State.from(1000);
 
@@ -374,6 +374,9 @@ describe("Selector", () => {
 
 
     atom.set(2);
+    // console.log('----- set 2')
+    await expect(doubleAsync.get()).resolves.toBe(2);
+
     expect(Track.getDependencies(atom).size).toBe(1);
     expect(Track.getDependencies(atom2).size).toBe(0);
     expect(Track.getDependents(doubleAsync).size).toBe(1);
