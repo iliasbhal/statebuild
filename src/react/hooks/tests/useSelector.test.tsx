@@ -1,8 +1,8 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { State, useSelector } from '../..';
+import { State, useBuild } from '../..';
 
-describe('useSelector', () => {
+describe('useBuild.Select', () => {
   it('should return selector value', () => {
     const count = State.from(3);
     const doubleSelector = State.select(() => {
@@ -11,7 +11,7 @@ describe('useSelector', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const double = useSelector(doubleSelector);
+      const double = useBuild.Select(doubleSelector);
       rerenderSpy();
       return (
         <div data-testid="container">
@@ -34,7 +34,7 @@ describe('useSelector', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const double = useSelector(doubleSelector);
+      const double = useBuild.Select(doubleSelector);
       rerenderSpy();
       return (
         <div data-testid="container" onClick={() => count.set(1)}>
@@ -65,7 +65,7 @@ describe('useSelector', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const value = useSelector(doubleSelector);
+      const value = useBuild.Select(doubleSelector);
       rerenderSpy();
       return (
         <div

@@ -1,28 +1,25 @@
 import React from 'react';
-import { Selector, SelectorCallback, Reaction } from '../../core';
+import { Selector, AnySelectorCallback } from '../../core';
+import { useReaction } from './useReaction';
 
-export const useSelector = <Fn extends SelectorCallback>(selector: Selector<Fn>): ReturnType<Fn> => {
-  const valueRef = React.useRef();
+export const useSelector = <Fn extends AnySelectorCallback>(selector: Selector<Fn>): ReturnType<Fn> => {
+  const valueRef = React.useRef<ReturnType<Fn>>();
+
   const [_, rerender] = React.useState(() => {
     const value = selector.get();
     valueRef.current = value;
   });
 
-  React.useEffect(() => {
-    const reaction = new Reaction(() => {
-      const nextValue = selector.get();
-      if (valueRef.current !== nextValue) {
-        valueRef.current = nextValue;
-        rerender({});
-      }
-    });
 
-    reaction.start();
+  useReaction(() => {
+    const nextValue = selector.get();
 
-    return () => {
-      reaction.dispose();
+    const hasChanged = valueRef.current !== nextValue;
+    if (!hasChanged) {
+      valueRef.current = nextValue;
+      rerender({});
     }
-  }, [selector]);
+  });
 
   return valueRef.current;
 }

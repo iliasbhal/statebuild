@@ -1,6 +1,7 @@
 import { QueryClient, QueryObserver, UseQueryOptions, QueryObserverResult } from '@tanstack/react-query';
 import { Atom, Selector } from '../';
 import { Track } from '../core/Track';
+import { makeCallableSelector } from '../core/utils/convertToCallback';
 
 
 type SelectorConfig = { client: QueryClient };
@@ -64,6 +65,6 @@ export class QuerySelector<Result> extends Selector<() => Result> {
     type Return = Awaited<ReturnType<Exclude<O['queryFn'], symbol>>>;
     type Result = QueryObserverResult<Return>;
     const selector = new QuerySelector<Result>(options);
-    return Selector.makeCallableSelector(selector);
+    return makeCallableSelector(selector);
   }
 }

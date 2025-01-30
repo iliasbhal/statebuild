@@ -1,42 +1,48 @@
 import { Entity } from './base/Entity';
 import { Atom } from "./Atom";
 import { Track } from './Track';
+import { Generator } from './utils/Generator'
 
 export type SelectorCallback = (ctx: SelectorContext) => any;
 export type SelectorAsyncCallback = (...args: any) => Promise<any>;
+export type AnySelectorCallback = SelectorCallback | SelectorAsyncCallback;
 
 export const STATEBUILD_RAW_FLAG = '__STATEBUILD_RAW__';
 
-export class Selector<Fn extends SelectorCallback, ID extends string = string> extends Atom<ReturnType<Fn>> {
-  static disposableRessources = new WeakMap<Selector<any>, { dispose: Function }[]>();
-
+export class Selector<Fn extends SelectorCallback = SelectorCallback> extends Atom<ReturnType<Fn>> {
   selectorFn: Fn;
-  context = new SelectorContext(this);
-  id: ID;
+
+  id: string;
   constructor(selectorFn: Fn) {
     super(null);
     this.selectorFn = selectorFn;
-  }
 
-  static makeCallableSelector<A extends Selector<any>>(selector: A): A['selectorFn'] & A {
-    const callable = () => selector.get();
 
-    Object.setPrototypeOf(callable, Selector.prototype);
-    const callableAtom = Object.assign(callable, selector, {
-      get: selector.get.bind(selector),
-      [STATEBUILD_RAW_FLAG]: selector,
+    const subscription = Track.subscribe(this, () => {
+      this.executeOnInvalidate();
     });
 
-    const coreAtom = Entity.getBaseObject(selector);
-    Entity.originalObjectByProxy.set(callableAtom, coreAtom);
-    return callableAtom;
+    Track.ressourcesByEntity.add(this, {
+      dispose: () => {
+        subscription.unsubscribe();
+        this.invalidationCallbacks = new Set<Function>();
+      }
+    });
   }
 
   static runRaw(selector: Selector<any>) {
     const isGenerator = Generator.isGeneratorFunction(selector.selectorFn);
-    const value = selector.selectorFn(selector.context);
+    const context = new SelectorContext(selector);
+
+    let value = selector.selectorFn(context);
     if (isGenerator) {
-      return Generator.execute(value);
+      value = Generator.execute(value);
+    }
+
+    if (value instanceof Promise) {
+      value.then(() => context.dispose());
+    } else {
+      context.dispose();
     }
 
     return value;
@@ -60,10 +66,21 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
     Entity.dispose(this);
   }
 
-  onInvalidate(callback: Function) {
-    return Track.subscribe(this, () => {
+  invalidationCallbacks: Set<Function> = new Set<Function>();
+  private executeOnInvalidate = () => {
+    this.invalidationCallbacks.forEach((callback) => {
       callback();
     })
+  }
+
+  onInvalidate(callback: Function) {
+    this.invalidationCallbacks.add(callback);
+
+    return {
+      unsubscribe: () => {
+        this.invalidationCallbacks.delete(callback);
+      }
+    }
   }
 
   select(...args: unknown[]) {
@@ -105,62 +122,28 @@ export class Selector<Fn extends SelectorCallback, ID extends string = string> e
 
 export class SelectorContext {
   selector: Selector<any>;
+  abortController = new AbortController();
 
+  onInvalidateSub: ReturnType<typeof this.selector.onInvalidate>
   constructor(selector: Selector<any> = null) {
     this.selector = selector;
+
+    this.onInvalidateSub = this.selector.onInvalidate(() => {
+      this.abortController.abort();
+    });
+  }
+
+  get aborted() {
+    return this.abortController.signal.aborted;
+  }
+
+  dispose() {
+    this.onInvalidateSub?.unsubscribe();
   }
 
   get = <A extends Atom<any>>(atom: A): A['value'] => {
-    // const isTrackable = atom instanceof Selector;
-    // if (!isTrackable) {
-    //   return atom.get();
-    // }
-
     return Track.attributeChanges(this.selector, () => {
       return atom.get();
-    })
-  }
-}
-
-export class Generator {
-  static isGeneratorFunction(fn: any) {
-    const GeneratorFunction = (function* () { yield undefined; }).constructor;
-    const isGenerator = fn instanceof GeneratorFunction;
-    return isGenerator;
-  }
-
-  static execute(generator: Generator, step?: Function) {
-    // const generator = generatorFn(...args);
-    const executeStep = step ? step : (callback: Function) => callback()
-
-    return new Promise(function (resolve, reject) {
-      const generatorStep = (key, arg) => {
-        try {
-          let info = null
-
-          executeStep(() => {
-            info = generator[key](arg)
-          });
-
-          if (info.done) {
-            resolve(info.value)
-          } else {
-            Promise.resolve(info.value)
-              .then(api.next, api.throw)
-          }
-
-        } catch (error) {
-          reject(error)
-          return
-        }
-      }
-
-      const api = {
-        next: (yielded) => generatorStep("next", yielded),
-        throw: (err) => generatorStep("throw", err),
-      };
-
-      api.next(undefined)
     })
   }
 }

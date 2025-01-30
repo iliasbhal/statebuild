@@ -60,6 +60,7 @@ describe("Selector", () => {
     expect(selector).toHaveBeenCalledTimes(1);
   });
 
+
   it("doesn't recompute selector if atom hasn't changed", () => {
     const count = State.from(3);
     const selector = jest.fn()
@@ -95,6 +96,36 @@ describe("Selector", () => {
     expect(double.get()).toBe(8);
     expect(selector).toHaveBeenCalledTimes(1);
   });
+
+  it('provide access to a abort signal if upstream is invalidated while running', async () => {
+    const count = State.from(3);
+
+    const abortedSpy = jest.fn()
+    const doubleAsync = State.select(async (ctx: any) => {
+      const value = count.get();
+
+      abortedSpy(ctx.aborted);
+      
+      await wait(200);
+
+      abortedSpy(ctx.aborted);
+
+      return value * 2
+    });
+
+    doubleAsync.get();
+    expect(abortedSpy).toHaveBeenCalledTimes(1);
+    expect(abortedSpy).toHaveBeenCalledWith(false);
+    abortedSpy.mockClear();
+
+    await wait(100)
+    count.set(4);
+
+    await wait(200)
+    expect(abortedSpy).toHaveBeenCalledTimes(1);
+    expect(abortedSpy).toHaveBeenCalledWith(true);
+    abortedSpy.mockClear();
+  })
 
   it("can be used like a normal function", () => {
     const count = State.from(3);

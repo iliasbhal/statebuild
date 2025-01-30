@@ -1,9 +1,9 @@
 import React from 'react';
 import * as testingLib from '@testing-library/react'
-import { State, useEntity } from '../..';
+import { State, useBuild } from '../..';
 
 
-describe.skip('useEntity', () => {
+describe('useBuild.Instance', () => {
   class Count extends State {
     count = 0;
     count2 = 0;
@@ -21,8 +21,9 @@ describe.skip('useEntity', () => {
     }
   }
 
-  const Container = () => {
-    const store = useEntity(Count)
+  const Container = (props) => {
+    const store = useBuild.Instance(Count);
+
     return (
       <div
         data-testid="container"
@@ -70,7 +71,7 @@ describe.skip('useEntity', () => {
     }
 
     const Container = () => {
-      const store = useEntity(Count)
+      const store = useBuild.Instance(Count)
 
       return (
         <div
@@ -111,7 +112,7 @@ describe.skip('useEntity', () => {
 
     const renderSpy = jest.fn();
     const Container = () => {
-      const store = useEntity(TestState)
+      const store = useBuild.Instance(TestState)
       renderSpy();
 
       return (
@@ -144,7 +145,7 @@ describe.skip('useEntity', () => {
 
     const renderSpy = jest.fn();
     const Container = () => {
-      const store = useEntity(Count)
+      const store = useBuild.Instance(Count)
       renderSpy();
 
       return (
@@ -176,7 +177,7 @@ describe.skip('useEntity', () => {
     const renderTrack = jest.fn();
 
     const Container = (props: { count: Count }) => {
-      const store = useEntity(props.count)
+      const store = useBuild.Instance(props.count)
 
       const prevCount = store.count;
 
@@ -213,7 +214,7 @@ describe.skip('useEntity', () => {
     const renderTrack = jest.fn();
 
     const Container = (props: any) => {
-      const store = useEntity(props.count)
+      const store = useBuild.Instance(props.count)
       renderTrack();
       return (
         <div
@@ -248,7 +249,7 @@ describe.skip('useEntity', () => {
     const renderTrack = jest.fn();
 
     const Container = (props: any) => {
-      const store = useEntity(props.count)
+      const store = useBuild.Instance(props.count)
       renderTrack();
       return (
         <div data-testid="container">
@@ -276,7 +277,7 @@ describe.skip('useEntity', () => {
     const renderSpy = jest.fn();
 
     const Container = () => {
-      const store = useEntity(Count)
+      const store = useBuild.Instance(Count)
       renderSpy();
       return (
         <div
@@ -338,7 +339,7 @@ describe.skip('useEntity', () => {
     const people = new People();
     const renderTrack = jest.fn();
     const PeopleList = (props: { people: People }) => {
-      const store = useEntity(props.people)
+      const store = useBuild.Instance(props.people)
       renderTrack();
       return (
         <div
@@ -385,7 +386,7 @@ describe.skip('useEntity', () => {
 
     const renderTrack = jest.fn();
     const PeopleList = (props: { people: People }) => {
-      const store = useEntity(props.people)
+      const store = useBuild.Instance(props.people)
       const lastPerson = store.people[store.people.length - 1];
       renderTrack();
       return (
@@ -422,7 +423,7 @@ describe.skip('useEntity', () => {
 
     const renderTrack = jest.fn();
     const PeopleList = (props: { people: People }) => {
-      const store = useEntity(props.people)
+      const store = useBuild.Instance(props.people)
       const firstPerson = store.people[0];
       renderTrack();
       return (
@@ -461,7 +462,7 @@ describe.skip('useEntity', () => {
 
     const renderTrack = jest.fn();
     const PeopleDisplay = (props: { people: People }) => {
-      const store = useEntity(props.people)
+      const store = useBuild.Instance(props.people)
 
       renderTrack();
       return (
@@ -512,7 +513,7 @@ describe.skip('useEntity', () => {
 
     const renderTrack = jest.fn();
     const PeopleDisplay = (props: { people: People }) => {
-      const store = useEntity(props.people)
+      const store = useBuild.Instance(props.people)
       renderTrack();
       return (
         <div

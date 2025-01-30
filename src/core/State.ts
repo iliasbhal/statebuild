@@ -2,13 +2,14 @@ import { Selector, SelectorCallback } from './Selector';
 import { Entity } from './base/Entity';
 import { Atom } from './Atom';
 import { Reaction } from './Reaction';
+import { makeCallableSelector, makeCallableAtom } from './utils/convertToCallback';
 
-type Select<Fn extends SelectorCallback> = ReturnType<typeof Selector.makeCallableSelector<Selector<Fn>>>
+type Select<Fn extends SelectorCallback> = ReturnType<typeof makeCallableSelector<Selector<Fn>>>
 
 export class State extends Entity {
   static from<V>(value: V) {
     const atom = new Atom(value);
-    return Atom.makeCallableAtom(atom);
+    return makeCallableAtom(atom);
   }
 
   static select<Fn extends SelectorCallback>(id: string, selectorFn: Fn): Select<Fn>;
@@ -17,11 +18,11 @@ export class State extends Entity {
     if (typeof a === 'string') {
       const selector = new Selector(b);
       selector.id = a;
-      return Selector.makeCallableSelector(selector);
+      return makeCallableSelector(selector);
     }
 
     const selector = new Selector(a);
-    return Selector.makeCallableSelector(selector);
+    return makeCallableSelector(selector);
   }
 
   static reaction<Fn extends SelectorCallback>(id: string, reactionCallback: () => void): Reaction;

@@ -3,13 +3,19 @@ import { Entity } from '../../core';
 import { useForceRender } from '../../utils/useForceRender';
 import { makeDisposable } from "../../utils/disposable";
 
-interface Type<T> extends Function {
+export interface Type<T> extends Function {
   new(...args: any[]): T;
 }
 
+const useInstance = <T extends Entity>(entity: Type<T> | T) => {
+  const [instance] = React.useState(() => getEntityInstance(entity))
+  return instance;
+}
+
 export const useEntity = <T extends Entity>(entity: Type<T> | T): T & Disposable => {
-  const [instance] = React.useState(() => getEntityInstance(entity));
-  return useDetectUsageAndRerenderOnChange(instance);
+  const instance = useInstance(entity);
+  const register = useDetectUsageAndRerenderOnChange(instance);
+  return makeDisposable(instance, () => register.dispose())
 }
 
 const getEntityInstance = <T extends Entity>(entity: Type<T> | T): T => {
@@ -36,7 +42,7 @@ const useRegisterListener = <T extends Entity>(entity: T) => {
 
   // Reset & Setup listener to detect usage
   ref.disposed = false;
-  // const listener = Entity.regsiterGlobalListener(entity, (parent, key) => {
+  // const listener = Entity.subscribe(entity, (parent, key) => {
   //   if (!ref.current.has(parent)) {
   //     ref.current.set(parent, new Set());
   //   }
@@ -65,7 +71,9 @@ const useRegisterListener = <T extends Entity>(entity: T) => {
 
 const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
   const register = useRegisterListener(entity);
+
   const forceRender = useForceRender();
+
   React.useEffect(() => {
     register.dispose();
     const subscriptions = register.getUsedProps().map(([obj, props]) => {
@@ -84,7 +92,7 @@ const useDetectUsageAndRerenderOnChange = <T extends Entity>(entity: T) => {
     }
   });
 
-  return makeDisposable(entity, () => register.dispose());
+  return register;
 }
 
 

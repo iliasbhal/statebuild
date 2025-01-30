@@ -1,32 +1,22 @@
-import { Selector, SelectorContext } from "./Selector";
-import { Entity } from "./base/Entity";
-import { Track } from "./Track";
+import { Selector, AnySelectorCallback } from "./Selector";
 
-type ReactionCallback = () => any;
-
-export class Reaction extends Selector<ReactionCallback> {
-  constructor(callback: () => any) {
-    super(callback);
+export class Reaction {
+  id: string;
+  callback: AnySelectorCallback;
+  selector: Selector<AnySelectorCallback>
+  constructor(callback: AnySelectorCallback) {
+    this.callback = callback;
   }
 
-  static runningEffect = new WeakSet<Selector<any>>();
-
-  context = new ReactionContext(this);
-  subscription: ReturnType<typeof Track.subscribe>
-
-  started = false;
-
   start() {
-    if (this.started) return;
-    this.started = true;
+    if (this.selector) return;
 
-    Track.subscribe(this, () => {
-      if (Reaction.runningEffect.has(this)) return;
-      this.execute();
-    })
+    this.selector = new Selector(this.callback);
+    this.selector.id = this.id;
+    this.selector.get();
 
-    Track.attributeChanges(this, () => {
-      this.execute();
+    this.selector.onInvalidate(() => {
+      this.restart();
     });
   }
 
@@ -35,31 +25,12 @@ export class Reaction extends Selector<ReactionCallback> {
     this.start();
   }
 
-  private execute() {
-    Track.dispose(this);
-    this.get();
-  }
-
-  forceRun() {
-    return Selector.runRaw(this);
-  }
-
   dispose() {
-    this.subscription?.unsubscribe();
-    super.dispose();
+    this.selector?.dispose();
+    this.selector = null;
   }
 
   stop() {
-    this.started = false
     this.dispose();
-  }
-}
-
-
-class ReactionContext extends SelectorContext {
-  effect(callback: () => void) {
-    Reaction.runningEffect.add(this.selector);
-    callback();
-    Reaction.runningEffect.delete(this.selector);
   }
 }
