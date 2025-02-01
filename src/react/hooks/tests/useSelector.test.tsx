@@ -11,7 +11,7 @@ describe('useBuild.Select', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const double = useBuild.Select(doubleSelector);
+      const double = useBuild.Select(doubleSelector as any);
       rerenderSpy();
       return (
         <div data-testid="container">
@@ -34,7 +34,7 @@ describe('useBuild.Select', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const double = useBuild.Select(doubleSelector);
+      const double = useBuild.Select(doubleSelector as any);
       rerenderSpy();
       return (
         <div data-testid="container" onClick={() => count.set(1)}>
@@ -65,7 +65,7 @@ describe('useBuild.Select', () => {
 
     const rerenderSpy = jest.fn();
     const Wrapper = () => {
-      const value = useBuild.Select(doubleSelector);
+      const value = useBuild.Select(doubleSelector as any);
       rerenderSpy();
       return (
         <div

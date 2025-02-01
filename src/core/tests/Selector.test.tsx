@@ -42,6 +42,8 @@ describe("Selector", () => {
     const count = State.from(3);
     const double = State.select(() => count.get() * 2);
 
+    expect(double.get()).toBe(6);
+
     count.set(6);
     expect(double.get()).toBe(12);
 
@@ -399,18 +401,18 @@ describe("Selector", () => {
     });
     
     await expect(doubleAsync.get()).resolves.toBe(1000);
-    expect(Track.getDependencies(atom).size).toBe(1);
-    expect(Track.getDependencies(atom2).size).toBe(1);
-    expect(Track.getDependents(doubleAsync).size).toBe(2);
+    expect(Track.getDependencies(atom.atom).size).toBe(1);
+    expect(Track.getDependencies(atom2.atom).size).toBe(1);
+    expect(Track.getDependents(doubleAsync.atom).size).toBe(2);
 
 
     atom.set(2);
     // console.log('----- set 2')
     await expect(doubleAsync.get()).resolves.toBe(2);
 
-    expect(Track.getDependencies(atom).size).toBe(1);
-    expect(Track.getDependencies(atom2).size).toBe(0);
-    expect(Track.getDependents(doubleAsync).size).toBe(1);
+    expect(Track.getDependencies(atom.atom).size).toBe(1);
+    expect(Track.getDependencies(atom2.atom).size).toBe(0);
+    expect(Track.getDependents(doubleAsync.atom).size).toBe(1);
 
 
     await expect(doubleAsync.get()).resolves.toBe(2);

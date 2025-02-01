@@ -2,35 +2,9 @@ import { AsyncContext } from "simple-async-context";
 import { Polyfill } from "simple-async-context/build/polyfill/Polyfill";
 import { DependencyTree } from "../utils/DependencyTree";
 import { Entity } from "./base/Entity";
+import { MapSet } from "../utils/MapSet";
 
 Polyfill.ensureEnabled();
-
-
-
-// type AA = Class
-
-type Store = typeof Map | typeof WeakMap | typeof Set | typeof WeakSet;
-
-class MapSet<K, V> extends Map<K, Set<V>> {
-
-
-  add(key: K, item: V) {
-    const set = this.get(key);
-    if (!set) {
-      const nextSet = new Set<V>();
-      this.set(key, nextSet);
-      return nextSet.add(item);
-    }
-
-    return set.add(item);
-  }
-
-  delete(key: K) {
-    const set = this.get(key);
-    set?.forEach((v) => set.delete(v));
-    return super.delete(key)
-  }
-}
 
 type TrackingContext = {
   visit(target: object, prop: string | symbol): void
@@ -111,9 +85,7 @@ export class Track {
   static ressourcesByEntity = new MapSet<Entity, { dispose: Function }>();
   static dispose(entity: Entity) {
     const core = Entity.getBaseObject(entity);
-    Track.ressourcesByEntity.get(core)
-      ?.forEach((ressource) => ressource.dispose());
-
+    Track.ressourcesByEntity.forEach(core, (ressource) => ressource.dispose())
     Track.ressourcesByEntity.delete(core)
   }
 
@@ -128,6 +100,7 @@ export class Track {
 
       let previousValue = obj[prop];
       const propSub = Entity.subscribe(obj, (updatedProp) => {
+        // console.log(entity, obj, prop, updatedProp);
         // console.log('obj', obj, updatedProp)
         const isTrackedProp = updatedProp === prop;
         if (!isTrackedProp) return;

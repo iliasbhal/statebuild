@@ -1,4 +1,3 @@
-import { Entity } from './base/Entity';
 import { Atom } from "./Atom";
 import { Track } from './Track';
 import { Generator } from './utils/Generator'
@@ -10,31 +9,32 @@ export type AnySelectorCallback = SelectorCallback | SelectorAsyncCallback;
 export const STATEBUILD_RAW_FLAG = '__STATEBUILD_RAW__';
 
 export class Selector<Fn extends SelectorCallback = SelectorCallback> extends Atom<ReturnType<Fn>> {
-  selectorFn: Fn;
-
+  callback: Fn;
   id: string;
-  constructor(selectorFn: Fn) {
-    super(null);
-    this.selectorFn = selectorFn;
 
+  constructor(callback: Fn) {
+    super(undefined);
 
-    const subscription = Track.subscribe(this, () => {
-      this.executeOnInvalidate();
+    this.callback = callback;
+
+    const subscription = Track.subscribe(this.atom, () => {
+      this.invalidationCallbacks.forEach((callback) => {
+        callback();
+      })
     });
 
-    Track.ressourcesByEntity.add(this, {
+    Track.ressourcesByEntity.add(this.atom, {
       dispose: () => {
         subscription.unsubscribe();
-        this.invalidationCallbacks = new Set<Function>();
       }
     });
   }
 
-  static runRaw(selector: Selector<any>) {
-    const isGenerator = Generator.isGeneratorFunction(selector.selectorFn);
-    const context = new SelectorContext(selector);
+  private runSelectorCallback() {
+    const isGenerator = Generator.isGeneratorFunction(this.callback);
+    const context = new SelectorContext(this);
 
-    let value = selector.selectorFn(context);
+    let value = this.callback(context);
     if (isGenerator) {
       value = Generator.execute(value);
     }
@@ -48,31 +48,25 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
     return value;
   }
 
-  static runWithTracking(selector: Selector<any>) {
+  private runWithTracking() {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
 
     // console.log('run with Tracking') 
-    Track.remove(selector);
-    const selectedValue = Track.attributeChanges(selector, () => {
-      return Selector.runRaw(selector);
+    Track.remove(this.atom);
+    const selectedValue = Track.attributeChanges(this.atom, () => {
+      return this.runSelectorCallback();
     })
 
     return selectedValue;
   }
 
   dispose() {
-    Track.remove(this);
-    Entity.dispose(this);
+    Track.remove(this.atom);
+    super.dispose();
   }
 
   invalidationCallbacks: Set<Function> = new Set<Function>();
-  private executeOnInvalidate = () => {
-    this.invalidationCallbacks.forEach((callback) => {
-      callback();
-    })
-  }
-
   onInvalidate(callback: Function) {
     this.invalidationCallbacks.add(callback);
 
@@ -89,19 +83,19 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
       throw new Error('Selector does not accept arguments');
     }
 
-    const hasCachedValue = Track.isTracked(this)
+    const hasCachedValue = Track.isTracked(this.atom)
     if (!hasCachedValue) {
-      const selectedValue = Selector.runWithTracking(this)
+      const selectedValue = this.runWithTracking()
       super.set(selectedValue);
 
-      const isTracked = Track.isTracked(this)
+      const isTracked = Track.isTracked(this.atom)
       if (!isTracked) {
         // Selector doesn't have any dependencies
         // we'll add it to the registery to that the selector can concider 
         // that its value is in cache.
         // Note, the selector will never rerrun since it doesn't have dependencies
         // That may invalidate it.
-        Track.add(this);
+        Track.add(this.atom);
       }
     }
 
@@ -141,8 +135,8 @@ export class SelectorContext {
     this.onInvalidateSub?.unsubscribe();
   }
 
-  get = <A extends Atom<any>>(atom: A): A['value'] => {
-    return Track.attributeChanges(this.selector, () => {
+  get = <A extends Atom<any>>(atom: A): A['atom']['value'] => {
+    return Track.attributeChanges(this.selector.atom, () => {
       return atom.get();
     })
   }

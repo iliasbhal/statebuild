@@ -1,5 +1,4 @@
 import { State, } from '../';
-import { Reaction } from '../Reaction';
 
 describe('Reaction', () => {
 

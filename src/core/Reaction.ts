@@ -1,36 +1,25 @@
 import { Selector, AnySelectorCallback } from "./Selector";
 
-export class Reaction {
-  id: string;
-  callback: AnySelectorCallback;
-  selector: Selector<AnySelectorCallback>
-  constructor(callback: AnySelectorCallback) {
-    this.callback = callback;
-  }
-
+export class Reaction extends Selector<AnySelectorCallback> {
+  watch: ReturnType<typeof this.onInvalidate>;
   start() {
-    if (this.selector) return;
+    if (this.watch) {
+      return;
+    }
 
-    this.selector = new Selector(this.callback);
-    this.selector.id = this.id;
-    this.selector.get();
+    this.get();
 
-    this.selector.onInvalidate(() => {
-      this.restart();
+    this.watch = this.onInvalidate(() => {
+      this.get();
     });
   }
 
-  restart() {
-    this.stop();
-    this.start();
-  }
-
-  dispose() {
-    this.selector?.dispose();
-    this.selector = null;
-  }
-
   stop() {
-    this.dispose();
+    if (!this.watch) {
+      return;
+    }
+
+    this.watch.unsubscribe();
+    this.watch = null;
   }
 }

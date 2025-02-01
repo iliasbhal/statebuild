@@ -35,9 +35,10 @@ export class Entity {
     return shouldWrapWithProxy;
   };
 
-  private static wrap = <T extends object>(base: T): T => {
+  static wrap = <T extends object>(base: T): T => {
     const proxy = new Proxy(base, {
       get(target, prop, receiver) {
+        // console.log('GET', target, prop);
         const value = Reflect.get(target, prop, receiver);
         const isFunction = typeof value == "function";
 
@@ -54,6 +55,7 @@ export class Entity {
         return value;
       },
       set(target, prop, newValue, receiver) {
+        // console.log('SET', target, prop, newValue);
         const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(
           base,
           prop,

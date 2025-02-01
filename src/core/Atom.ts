@@ -1,19 +1,23 @@
 import { Entity } from './base/Entity';
 
-export class Atom<T> extends Entity {
-  value: T;
+export class Atom<T> {
+  atom: { value: T };
 
   constructor(value: T) {
-    super();
-
-    this.value = value;
+    this.atom = Entity.wrap({
+      value,
+    });
   }
 
   get() {
-    return this.value;
+    return this.atom.value
   }
 
   set(value: T) {
-    this.value = value;
+    this.atom.value = value
+  }
+
+  dispose() {
+    Entity.dispose(this.atom);
   }
 }

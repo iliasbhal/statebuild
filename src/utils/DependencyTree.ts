@@ -7,8 +7,8 @@ export interface Disposable {
 export class DependencyTree {
   items = new Set<Disposable>();
 
-  dependents = new WeakMap<Disposable, Set<Disposable>>();
-  dependencies = new WeakMap<Disposable, Set<Disposable>>();
+  dependents = new Map<Disposable, Set<Disposable>>();
+  dependencies = new Map<Disposable, Set<Disposable>>();
 
   invalidations = new EventBus<Disposable>();
   activityChanged = new EventBus<any>('activityChanged');
@@ -61,7 +61,6 @@ export class DependencyTree {
     // Also throw if there are things that have origin as a dependency.
     const dependents = this.dependents.get(origin);
     if (dependents?.size > 0) {
-      console.log(dependents)
       throw new Error('Cannot remove origin as it is a dependency of other items');
     }
 
