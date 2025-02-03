@@ -4,11 +4,11 @@ export interface Disposable {
   dispose?(): void;
 }
 
-export class DependencyTree {
+export class DependencyGraph {
   items = new Set<Disposable>();
 
-  dependents = new Map<Disposable, Set<Disposable>>();
-  dependencies = new Map<Disposable, Set<Disposable>>();
+  dependents = new WeakMap<Disposable, Set<Disposable>>();
+  dependencies = new WeakMap<Disposable, Set<Disposable>>();
 
   invalidations = new EventBus<Disposable>();
   activityChanged = new EventBus<any>('activityChanged');
