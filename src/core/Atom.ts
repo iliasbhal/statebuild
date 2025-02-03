@@ -49,7 +49,11 @@ export class Atom<T> {
 
   getSync(): Awaited<T> {
     if (this.atom.syncValue.isLoading) {
-      throw new Atom.Waiting(this.atom.syncValue.promise);
+
+      // Ensure we don't track when the promise changes, but only 
+      // when its not loading anymore. that why we use the "currentPromise" 
+      // located outside of the wrapped atom.
+      throw new Atom.Waiting(this.currentPromise as Promise<T>);
     }
 
     return this.atom.syncValue?.value;
