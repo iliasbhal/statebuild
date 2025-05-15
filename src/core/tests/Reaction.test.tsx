@@ -1,3 +1,4 @@
+import wait from 'wait';
 import { State, } from '../';
 
 describe('Reaction', () => {
@@ -91,4 +92,44 @@ describe('Reaction', () => {
       .toThrowError('Maximum call stack size exceeded')
   })
 
+
+  it.only('can react to async selector in dependencies', async () => {
+
+
+    const reactionSpy = jest.fn();
+    const passthrough = State.select('Double', async () => {
+    
+      await wait(100);
+      return 10;
+    });
+
+    const finalSpy = jest.fn();
+    const final = State.select('Final', () => {
+      finalSpy();
+      const value = passthrough.getSync();
+      return value;
+    });
+
+
+    const values = [];
+    State.reaction(() => {
+      const value = final.get();
+      values.push(value);
+      // reactionSpy(value)
+      // console.log('Reaction', value);
+    });
+
+    
+    console.log('values',values);
+
+    await wait(1000);
+
+    console.log('values',values);
+    // expect(reactionSpy).toHaveBeenNthCalledWith(1, {"error": undefined, "isLoading": true, "value": undefined });
+    // expect(reactionSpy).toHaveBeenNthCalledWith(2, {"error": undefined, "isLoading": false, "value": 10});
+
+    // atom.set(4);
+
+    // await wait(100);
+  })
 })

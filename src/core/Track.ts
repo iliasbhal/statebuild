@@ -3,6 +3,7 @@ import { Polyfill } from "simple-async-context/build/polyfill/Polyfill";
 import { DependencyGraph } from "../utils/DependencyGraph";
 import { Entity } from "./base/Entity";
 import { MapSet } from "../utils/MapSet";
+import { Atom } from "./Atom";
 
 Polyfill.ensureEnabled();
 
@@ -14,9 +15,16 @@ export class Track {
   static Context = new AsyncContext.Variable<TrackingContext>();
   static graph = new DependencyGraph();
 
+  static debug() {
+    Track.graph.dependencies.forEach((dependencies, key) => {
+      // @ts-ignore
+      console.log('dependencies', Atom.Ref.get(key)?.id, Array.from(dependencies).map(d => Atom.Ref.get(d)?.id));
+    })
+  }
+
   static subscribe(entity: Entity, callback: (...args: any[]) => void) {
-    const dependencyKey = Entity.getBaseObject(entity);
-    const subscription = Track.graph.invalidations.subscribe(dependencyKey, callback)
+    const core = Entity.getBaseObject(entity);
+    const subscription = Track.graph.invalidations.subscribe(core, callback)
     return subscription;
   }
 
@@ -33,6 +41,11 @@ export class Track {
   static register(origin: Entity, dependency: Entity) {
     const parent = Entity.getBaseObject(origin);
     const dependent = Entity.getBaseObject(dependency);
+
+    // @ts-ignore
+    if (Atom.Ref.get(dependency)?.id === 'Reaction') {
+      console.log('REGISTER', parent, dependent)
+    }
 
     return Track.graph.register(parent, dependent);
   }
@@ -56,6 +69,10 @@ export class Track {
 
   static invalidate(entity: Entity, force: boolean = false) {
     const core = Entity.getBaseObject(entity);
+
+    // @ts-ignore
+
+    // console.log('---- invalidate', Atom.Ref.get(core)?.id, force)
 
     return Track.graph.invalidate(core, force);
   }
@@ -108,18 +125,28 @@ export class Track {
         const nextValue = obj[updatedProp];
         const hasChanged = previousValue !== nextValue;
         if (hasChanged) {
+          // console.log('updatedProp', obj, updatedProp)
           Track.invalidate(entity, true);
           previousValue = nextValue;
         }
       });
 
       // console.log('register', entity, obj)
-      Track.register(entity, obj);
-      Track.ressourcesByEntity.add(entity, {
-        dispose: () => {
-          propSub.unsubscribe()
-        }
-      });
+
+      try {
+        // @ts-ignore
+        // console.log('REGISTER ATTEMPT', Atom.Ref.get(entity)?.id, Atom.Ref.get(obj)?.id, Atom.Ref.get(obj)?.id === undefined ? obj : 'known');
+        Track.register(entity, obj);
+        Track.ressourcesByEntity.add(entity, {
+          dispose: () => {
+            propSub.unsubscribe()
+          }
+        });
+      } catch (err) {
+        console.log('ERR', err);
+        // console.log('---', entity, obj);
+        throw err;
+      }
     }
 
     return {

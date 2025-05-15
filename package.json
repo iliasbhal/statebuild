@@ -34,7 +34,7 @@
     "build:dts": "tsc --emitDeclarationOnly --project ./tsconfig.build.json",
     "build:watch": "yarn build:ts -w & yarn build:dts -w",
     "prepublish": "yarn build",
-    "playground": "bun run --watch  ./scripts/playground.ts"
+    "playground": "tsx  ./scripts/playground.ts"
   },
   "peerDependencies": {},
   "dependencies": {

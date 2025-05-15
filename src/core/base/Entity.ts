@@ -1,5 +1,6 @@
 import { EventBus } from "../../utils/EventBus";
 import { Track } from "../Track";
+import { Atom } from "../Atom";
 
 export class Entity {
   static changes = new EventBus<Entity>();
@@ -43,6 +44,8 @@ export class Entity {
         const isFunction = typeof value == "function";
 
         if (!isFunction) {
+          // @ts-ignore
+          // console.log('visited ENTITY', prop, Atom.Ref.get(base)?.id);
           Track.visit(base, prop)
         }
 
@@ -55,7 +58,7 @@ export class Entity {
         return value;
       },
       set(target, prop, newValue, receiver) {
-        // console.log('SET', target, prop, newValue);
+        // console.log('SET', prop, newValue);
         const shouldWrapWithProxy = Entity.checkShouldWrapWithProxy(
           base,
           prop,

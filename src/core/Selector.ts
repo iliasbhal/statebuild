@@ -18,7 +18,10 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
     this.callback = callback;
 
     const subscription = Track.subscribe(this.atom, () => {
-      this.invalidationCallbacks.forEach((callback) => {
+      // Important to convert to array, because it's possible that 
+      // we're mutating the set while iterating 
+      // ( example: reaction unsubscribes and removes itself from the set, then adds itself again )
+      Array.from(this.invalidationCallbacks.values()).forEach((callback) => {
         callback();
       })
     });
@@ -34,28 +37,44 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
     const isGenerator = Generator.isGeneratorFunction(this.callback);
     const context = new SelectorContext(this);
 
-    let value = this.callback(context);
-    if (isGenerator) {
-      value = Generator.execute(value);
-    }
 
-    if (value instanceof Promise) {
-      value.then(() => context.dispose());
-    } else {
-      context.dispose();
-    }
+    try {
+      let value = this.callback(context);
+      if (isGenerator) {
+        value = Generator.execute(value);
+      }
 
-    return value;
+      if (value instanceof Promise) {
+        value.finally(() => context.dispose());
+      } else {
+        context.dispose();
+      }
+
+      return value;
+    } catch (err) {
+      throw err;
+    }
   }
 
   private runWithTracking() {
     // When running the selector we also keep track of what has been read
     // This is how we can determine what data is a dependency
 
-    // console.log('run with Tracking') 
+    // console.log('run with Tracking', this.id)
     Track.remove(this.atom);
     const selectedValue = Track.attributeChanges(this.atom, () => {
-      return this.runSelectorCallback();
+      try {
+        // console.log('RUN SELECTOR', this.id)
+        const result = this.runSelectorCallback();
+
+        if (result instanceof Promise) {
+          result;
+        }
+        // console.log('DONE RUN SELECTOR', this.id, result)
+        return result;
+      } catch (err) {
+        // console.log('ERRRR', err);
+      }
     })
 
     return selectedValue;
@@ -77,31 +96,28 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
     }
   }
 
-  select(...args: unknown[]) {
+  private ensureCacheNotStale(...args: unknown[]) {
     const calledWithArguments = args.length > 0;
     if (calledWithArguments) {
       throw new Error('Selector does not accept arguments');
     }
 
     const hasCachedValue = Track.isTracked(this.atom)
-    if (!hasCachedValue) {
-      const selectedValue = this.runWithTracking()
-      super.set(selectedValue);
+    if (hasCachedValue) return;
 
-      const isTracked = Track.isTracked(this.atom)
-      if (!isTracked) {
-        // Selector doesn't have any dependencies
-        // we'll add it to the registery to that the selector can concider 
-        // that its value is in cache.
-        // Note, the selector will never rerrun since it doesn't have dependencies
-        // That may invalidate it.
-        Track.add(this.atom);
-      }
+    // console.log('ENSURE CACHE NOT STALE', this.id)
+    const selectedValue = this.runWithTracking()
+    super.set(selectedValue);
+
+    const isTracked = Track.isTracked(this.atom)
+    if (!isTracked) {
+      // Selector doesn't have any dependencies
+      // we'll add it to the registery to that the selector can concider 
+      // that its value is in cache.
+      // Note, the selector will never rerrun since it doesn't have dependencies
+      // That may invalidate it.
+      Track.add(this.atom);
     }
-
-    // console.log('dependencies', Track.getDependencies(this), Track.getDependents(this));
-    const value = super.get();
-    return value;
   }
 
   set(value: unknown) {
@@ -109,7 +125,9 @@ export class Selector<Fn extends SelectorCallback = SelectorCallback> extends At
   }
 
   get(...args) {
-    return this.select(...args);
+    this.ensureCacheNotStale(...args);
+    const value = super.get();
+    return value;
   }
 }
 

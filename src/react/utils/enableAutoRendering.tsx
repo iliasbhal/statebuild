@@ -16,7 +16,7 @@ const wrapToAutoRerender = (component) => {
 
     const selector = new Selector(() => {
       return component(props);
-    })
+  })
 
     const rendered = selector.get()
 

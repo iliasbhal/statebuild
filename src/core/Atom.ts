@@ -1,10 +1,9 @@
 import { Entity } from './base/Entity';
 
 type SyncPromiseData<T> = {
-  promise: Promise<T>
   isLoading: boolean,
-  value: Awaited<T>,
-  error: Error,
+  value: Awaited<T> | undefined,
+  error: Error | undefined,
 };
 
 class AtomWaiting<T> extends Error {
@@ -18,19 +17,21 @@ class AtomWaiting<T> extends Error {
 
 export class Atom<T> {
   static Waiting = AtomWaiting;
+  static Ref = new WeakMap<any, Atom<any>>();
 
   atom: {
     value: T,
-    syncValue?: SyncPromiseData<T>
+    syncValue: SyncPromiseData<T>
   };
 
   constructor(value: T) {
     this.atom = Entity.wrap({
       value,
-      syncValue: this.toSyncValue(value)
+      syncValue: this.toSyncValue(value),
     });
 
     this.trackSyncValue(value);
+    Atom.Ref.set(Entity.getBaseObject(this.atom), this);
   }
 
   get() {
@@ -66,14 +67,21 @@ export class Atom<T> {
 
     if (isPromise) {
       const updateSyncData = (data, error) => {
+        console.log('updateSyncData', data, error)
         const hasChanged = this.currentPromise !== promise;
         if (hasChanged) return;
 
-        Object.assign(this.atom.syncValue, {
-          value: data || null,
-          error: error || null,
+        this.atom.syncValue = {
+          value: data || undefined,
+          error: error || undefined,
           isLoading: false,
-        });
+        };
+
+        // this.atom.syncValue = Object.assign({}, this.atom.syncValue, {
+        //   value: data || undefined,
+        //   error: error || undefined,
+        //   isLoading: false,
+        // });
       }
 
       promise.then((data) => updateSyncData(data, null))
@@ -81,23 +89,21 @@ export class Atom<T> {
     }
   }
 
-  private toSyncValue(promise: Promise<T> | T) {
+  private toSyncValue(promise: Promise<T> | T): SyncPromiseData<T> {
     const isPromise = promise instanceof Promise
 
     if (isPromise) {
       return {
-        promise: promise,
         isLoading: true,
-        value: null,
-        error: null,
+        value: undefined,
+        error: undefined,
       }
     }
 
     return {
-      promise: null,
       isLoading: false,
       value: promise as Awaited<T>,
-      error: null,
+      error: undefined,
     }
   }
 

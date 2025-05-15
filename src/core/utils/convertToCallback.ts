@@ -5,7 +5,8 @@ import { Selector } from '../Selector'
 export const STATEBUILD_RAW_FLAG = '__STATEBUILD_RAW__';
 
 export const makeCallableSelector = <A extends Selector<any>>(selector: A): A['callback'] & A => {
-  const callable = () => selector.get();
+  const callable = function () { return selector.get(); }
+  callable.toString = () => selector.id
 
   Object.setPrototypeOf(callable, Selector.prototype);
   const callableSelector = Object.assign(callable, selector, {

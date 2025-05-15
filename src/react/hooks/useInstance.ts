@@ -33,16 +33,6 @@ const getEntityInstance = <T extends Entity>(entity: Type<T> | T): T => {
   throw new Error('Argument not supprted');
 }
 
-const deco = () => () => {
-
-}
-
-function AAA() {
-
-
-
-};
-
 const useRegisterListener = <T extends Entity>(entity: T) => {
   const [ref] = React.useState(() => ({
     current: new Map<object, Set<string | symbol>>(),
